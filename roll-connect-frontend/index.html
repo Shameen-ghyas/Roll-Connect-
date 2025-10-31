@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roll Connect Test</title>
+  <!-- <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      text-align: center;
+      margin-top: 50px;
+    }
+    input, select, button {
+      padding: 8px;
+      margin: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #response {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style> -->
+</head>
+<body>
+  <h1> Roll Connect Test Interface</h1>
+
+  <label>Enter Player Name:</label>
+  <input type="text" id="playerName" placeholder="Your name" />
+
+  <br />
+
+  <label>Select Mode:</label>
+  <select id="gameMode">
+    <option value="offline">Offline</option>
+    <option value="online">Online</option>
+  </select>
+
+  <br />
+
+  <label>Enter Score:</label>
+  <input type="number" id="score" placeholder="Score" />
+
+  <br />
+
+  <label>Enter Wins:</label>
+  <input type="number" id="wins" placeholder="Wins" />
+
+  <br />
+  <button onclick="submitPlayer()">Submit</button>
+
+  <div id="response"></div>
+
+  <script>
+    async function submitPlayer() {
+      const playerName = document.getElementById('playerName').value;
+      const score = parseInt(document.getElementById('score').value);
+      const wins = parseInt(document.getElementById('wins').value);
+
+      if (!playerName) {
+        alert('Please enter a name!');
+        return;
+      }
+
+      const data = { playerName, score, wins };
+
+      try {
+        const res = await fetch('http://localhost:5000/api/leaderboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        document.getElementById('response').innerText =
+          ' Player saved: ' + JSON.stringify(result);
+      } catch (err) {
+        document.getElementById('response').innerText = 'Failed to connect to backend';
+      }
+    }
+  </script>
+</body>
+</html>
