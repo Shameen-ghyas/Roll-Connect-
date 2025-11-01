@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 require('dotenv').config();
 const leaderboardRoutes = require('./routes/leaderboardRoutes.js');
+const gameRoutes = require('./routes/gameRoutes.js');
 
 const app = express();
 const server = http.createServer(app);
@@ -18,6 +19,7 @@ app.use(express.json());
 connectDB();
 
 app.use('/api/leaderboard', leaderboardRoutes); 
+app.use('/api/game', gameRoutes);
 
 app.get('/', (req, res) => {
     res.send('Roll Connect Backend is running');
