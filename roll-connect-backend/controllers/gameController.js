@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const availableColors = ['red', 'blue', 'green', 'yellow'];
 
+//create a new game
 const createGame = async (req, res) => {
     try {
         const { mode, playerName } = req.body;
@@ -49,6 +50,7 @@ const createGame = async (req, res) => {
     }
 };
 
+// join an existing game
 const joinGame = async (req, res) =>{
     try{
         const { gameId, playerName } = req.body;
@@ -78,7 +80,7 @@ const joinGame = async (req, res) =>{
         if (existingPlayer) {
             return res.status(400).json({ error: "Player name already taken in this game." });
         }
-
+        // assign available colors to incoming players
         const assignedColor = game.players.map(p => p.color);
         const availableColor = availableColors.find(color => !assignedColor.includes(color));
 
