@@ -109,4 +109,44 @@ const joinGame = async (req, res) =>{
 }
 };
 
-module.exports = {createGame, joinGame};  
+// start the game
+const startGame = async (req, res) => {
+    try {
+        const {gameId} = req.body;
+
+    if (!gameId) {
+            return res.status(400).json({ error: "Game ID is required" });  
+    }
+    const game = await Game.findOne({gameId: gameId});
+    if (!game) {
+        return res.status(404).json({ error: "Game not found" });
+    }
+
+    if(game.gameStatus === 'active'){
+        return res.status(400).json({ error: "Game has already started" });
+    }
+
+    if (game.players.length < 2) {
+        return res.status(400).json({ error: "At least 2 players are required to start the game" });
+    }
+
+    // start the game 
+    game.gameStatus = 'active';
+    game.currentTurn = 0; // set to first player's turn
+    game.startTime = new Date();
+    await game.save();
+
+    res.status(200).json({ message: "Game started successfully",
+     data: {
+        gameId: game.gameId,
+        mode: game.mode,
+        players: game.players,
+        gameStatus: game.gameStatus,
+     }});
+} catch (error) {
+    console.error("Error starting game:", error);
+    res.status(500).json({ error: "Failed to start game" });    
+}
+};
+
+module.exports = {createGame, joinGame, startGame};  
