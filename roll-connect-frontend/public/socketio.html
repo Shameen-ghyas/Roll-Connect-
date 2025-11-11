@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FR2 Socket.io Test</title>
+    <!-- Socket.io client library -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1> Roll-Connect - Socket.io Real-Time Test</h1>
+
+    <hr>
+
+    <!-- Create Game -->
+    <h2>1. Create Game</h2>
+    <input type="text" id="createName" placeholder="Your Name">
+    <select id="gameMode">
+        <option value="online">Online</option>
+        <option value="offline">Offline</option>
+    </select>
+    <button onclick="createGame()">Create Game</button>
+
+    <hr>
+
+    <!-- Join Game via Socket -->
+    <h2>2. Join Game (Real-Time)</h2>
+    <input type="text" id="socketGameId" placeholder="Game ID">
+    <input type="text" id="socketName" placeholder="Your Name">
+    <button onclick="joinGameSocket()">Join with Socket.io</button>
+
+    <hr>
+
+    <!-- Start Game via Socket -->
+    <h2>3. Start Game (Real-Time)</h2>
+    <button onclick="startGameSocket()" id="startBtn" disabled>Start Game</button>
+
+    <hr>
+
+    <!-- Game Info -->
+    <div id="gameInfo" style="display:none; background:#f0f0f0; padding:15px; margin:10px 0;">
+        <h2> Current Game</h2>
+        <p><strong>Game ID:</strong> <span id="displayGameId"></span> 
+            <button onclick="copyGameId()">Copy</button>
+        </p>
+        <p><strong>Mode:</strong> <span id="displayMode"></span></p>
+        <p><strong>Status:</strong> <span id="displayStatus"></span></p>
+        <p><strong>Connection:</strong> <span id="connectionStatus">Not connected</span></p>
+    </div>
+
+    <hr>
+
+    <!-- Players List -->
+    <h2> Players (<span id="playerCount">0</span>/4)</h2>
+    <div id="playerList"></div>
+
+    <hr>
+
+    <!-- Real-Time Messages -->
+    <h3> Real-Time Updates:</h3>
+    <div id="realtimeMessages" style="background:#e8f5e9; padding:10px; min-height:100px;"></div>
+
+    <hr>
+
+    <!-- Messages -->
+    <h3>Messages:</h3>
+    <div id="messages"></div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/game';
+        const SOCKET_URL = 'http://localhost:5000';
+        
+        let socket;
+        let currentGameId = null;
+        let currentPlayerName = null;
+
+        // Initialize Socket.io connection
+        function initSocket() {
+            socket = io(SOCKET_URL);
+
+            socket.on('connect', () => {
+                console.log(' Socket connected:', socket.id);
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('connectionStatus').style.color = 'green';
+                showRealtimeMessage('Connected to server!');
+            });
+
+            socket.on('disconnect', () => {
+                console.log(' Socket disconnected');
+                document.getElementById('connectionStatus').textContent = 'Disconnected ❌';
+                document.getElementById('connectionStatus').style.color = 'red';
+                showRealtimeMessage(' Disconnected from server');
+            });
+
+            // Listen for player joined event
+            socket.on('player-joined', (data) => {
+                console.log('Player joined:', data);
+                showRealtimeMessage(` ${data.newPlayer} joined the game!`);
+                updatePlayerList(data.players);
+                document.getElementById('displayStatus').textContent = data.gameStatus;
+                
+                // Enable start button if we have enough players
+                if (data.players.length >= 2) {
+                    document.getElementById('startBtn').disabled = false;
+                }
+            });
+
+            // Listen for game started event
+            socket.on('game-started', (data) => {
+                console.log('Game started:', data);
+                showRealtimeMessage(` ${data.message}`);
+                document.getElementById('displayStatus').textContent = data.gameStatus;
+                document.getElementById('startBtn').disabled = true;
+                updatePlayerList(data.players);
+            });
+
+            // Listen for player left event
+            socket.on('player-left', (data) => {
+                console.log('Player left:', data);
+                showRealtimeMessage(` ${data.leftPlayer} left the game`);
+                updatePlayerList(data.players);
+            });
+
+            // Listen for player disconnected
+            socket.on('player-disconnected', (data) => {
+                console.log('Player disconnected:', data);
+                showRealtimeMessage(` ${data.message}`);
+            });
+
+            // Listen for errors
+            socket.on('error', (data) => {
+                console.error('Socket error:', data);
+                showMessage('❌ ' + data.message, 'red');
+            });
+        }
+
+        // Create game (REST API)
+        async function createGame() {
+            const playerName = document.getElementById('createName').value.trim();
+            const mode = document.getElementById('gameMode').value;
+
+            if (!playerName) {
+                showMessage('Enter your name!', 'red');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playerName, mode })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentGameId = result.data.gameId;
+                    currentPlayerName = playerName;
+                    
+                    displayGameInfo(result.data);
+                    updatePlayerList(result.data.players);
+                    showMessage(`Game created! You are ${result.data.players[0].color.toUpperCase()}`, 'green');
+                    
+                    // Auto-fill join inputs
+                    document.getElementById('socketGameId').value = currentGameId;
+                    
+                    // Initialize socket and join room
+                    if (!socket) {
+                        initSocket();
+                    }
+                    
+                    // Wait a bit for socket to connect, then join room
+                    setTimeout(() => {
+                        socket.emit('join-game', { gameId: currentGameId, playerName });
+                    }, 500);
+                    
+                } else {
+                    showMessage('❌ ' + result.error, 'red');
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message, 'red');
+            }
+        }
+
+        // Join game via Socket.io
+        function joinGameSocket() {
+            const gameId = document.getElementById('socketGameId').value.trim();
+            const playerName = document.getElementById('socketName').value.trim();
+
+            if (!gameId || !playerName) {
+                showMessage('Enter both Game ID and Name!', 'red');
+                return;
+            }
+
+            currentGameId = gameId;
+            currentPlayerName = playerName;
+
+            // Initialize socket if not already connected
+            if (!socket) {
+                initSocket();
+            }
+
+            // Wait for connection then join
+            setTimeout(() => {
+                socket.emit('join-game', { gameId, playerName });
+                document.getElementById('gameInfo').style.display = 'block';
+                document.getElementById('displayGameId').textContent = gameId;
+            }, 500);
+
+            showMessage(`Joining game ${gameId}...`, 'blue');
+        }
+
+        // Start game via Socket.io
+        function startGameSocket() {
+            if (!currentGameId) {
+                showMessage('No active game!', 'red');
+                return;
+            }
+
+            socket.emit('start-game', { gameId: currentGameId });
+            showMessage('Starting game...', 'blue');
+        }
+
+        // Display game info
+        function displayGameInfo(data) {
+            document.getElementById('gameInfo').style.display = 'block';
+            document.getElementById('displayGameId').textContent = data.gameId;
+            document.getElementById('displayMode').textContent = data.mode;
+            document.getElementById('displayStatus').textContent = data.gameStatus;
+        }
+
+        // Update player list
+        function updatePlayerList(players) {
+            const playerList = document.getElementById('playerList');
+            const playerCount = document.getElementById('playerCount');
+            
+            playerCount.textContent = players.length;
+            playerList.innerHTML = '';
+
+            if (players.length === 0) {
+                playerList.innerHTML = '<p style="color:#999;">No players yet</p>';
+                return;
+            }
+
+            players.forEach((player, index) => {
+                const p = document.createElement('p');
+                p.style.borderLeft = `5px solid ${player.color}`;
+                p.style.paddingLeft = '10px';
+                p.style.marginBottom = '8px';
+                p.innerHTML = `
+                    <strong>Player ${index + 1}:</strong> ${player.playerName} 
+                    | <strong style="color:${player.color}">●</strong> ${player.color.toUpperCase()} 
+                    |  ${player.pawns.length} pawns
+                `;
+                playerList.appendChild(p);
+            });
+        }
+
+        // Show real-time message
+        function showRealtimeMessage(msg) {
+            const div = document.getElementById('realtimeMessages');
+            const p = document.createElement('p');
+            const time = new Date().toLocaleTimeString();
+            p.textContent = `[${time}] ${msg}`;
+            p.style.marginBottom = '5px';
+            div.insertBefore(p, div.firstChild);
+        }
+
+        // Copy game ID
+        function copyGameId() {
+            const gameId = document.getElementById('displayGameId').textContent;
+            navigator.clipboard.writeText(gameId);
+            showMessage(' Game ID copied!', 'blue');
+        }
+
+        // Show message
+        function showMessage(msg, color) {
+            const div = document.getElementById('messages');
+            const p = document.createElement('p');
+            p.style.color = color;
+            p.style.padding = '8px';
+            p.style.backgroundColor = color === 'red' ? '#ffe6e6' : color === 'green' ? '#e6ffe6' : '#e6f3ff';
+            p.style.borderRadius = '4px';
+            p.style.marginBottom = '5px';
+            p.textContent = msg;
+            div.insertBefore(p, div.firstChild);
+            
+            setTimeout(() => p.remove(), 5000);
+        }
+
+        // Cleanup on page unload
+        window.onbeforeunload = () => {
+            if (socket && currentGameId && currentPlayerName) {
+                socket.emit('leave-game', { gameId: currentGameId, playerName: currentPlayerName });
+            }
+        };
+    </script>
+</body>
+</html>

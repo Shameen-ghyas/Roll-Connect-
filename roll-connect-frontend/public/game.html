@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FR3 Complete Test</title>
+</head>
+<body>
+    <h1>🎲 Roll-Connect - FR3 Complete Test</h1>
+
+    <hr>
+
+    <!-- Create Game -->
+    <h2>1. Create Game</h2>
+    <input type="text" id="createName" placeholder="Your Name">
+    <select id="gameMode">
+        <option value="online">Online</option>
+        <option value="offline">Offline</option>
+    </select>
+    <button onclick="createGame()">Create Game</button>
+
+    <hr>
+
+    <!-- Join Game -->
+    <h2>2. Join Game</h2>
+    <input type="text" id="joinGameId" placeholder="Game ID">
+    <input type="text" id="joinName" placeholder="Your Name">
+    <button onclick="joinGame()">Join Game</button>
+
+    <hr>
+
+    <!-- Start Game -->
+    <h2>3. Start Game</h2>
+    <input type="text" id="startGameId" placeholder="Game ID">
+    <button onclick="startGame()">Start Game</button>
+
+    <hr>
+
+    <!-- Get Game Details -->
+    <h2>4. Get Game Details</h2>
+    <input type="text" id="detailsGameId" placeholder="Game ID">
+    <button onclick="getGameDetails()">Get Details</button>
+
+    <hr>
+
+    <!-- Game Info Display -->
+    <div id="gameInfo" style="display:none; background:#f0f0f0; padding:15px; margin:10px 0;">
+        <h2>📋 Current Game</h2>
+        <p><strong>Game ID:</strong> <span id="displayGameId"></span> 
+            <button onclick="copyGameId()">Copy</button>
+        </p>
+        <p><strong>Mode:</strong> <span id="displayMode"></span></p>
+        <p><strong>Status:</strong> <span id="displayStatus"></span></p>
+        <p><strong>Current Turn:</strong> Player <span id="displayTurn"></span></p>
+        <p><strong>Start Time:</strong> <span id="displayStartTime"></span></p>
+    </div>
+
+    <hr>
+
+    <!-- Players List -->
+    <h2>👥 Players (<span id="playerCount">0</span>/4)</h2>
+    <div id="playerList"></div>
+
+    <hr>
+
+    <!-- Messages -->
+    <h3>Messages:</h3>
+    <div id="messages"></div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/game';
+        let currentGameId = null;
+
+        // 1. Create Game
+        async function createGame() {
+            const playerName = document.getElementById('createName').value.trim();
+            const mode = document.getElementById('gameMode').value;
+
+            if (!playerName) {
+                showMessage('Enter your name!', 'red');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playerName, mode })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentGameId = result.data.gameId;
+                    displayGameInfo(result.data);
+                    updatePlayerList(result.data.players);
+                    showMessage(`✅ Game created! You are ${result.data.players[0].color.toUpperCase()}`, 'green');
+                    
+                    // Auto-fill other inputs
+                    document.getElementById('joinGameId').value = currentGameId;
+                    document.getElementById('startGameId').value = currentGameId;
+                    document.getElementById('detailsGameId').value = currentGameId;
+                } else {
+                    showMessage('❌ ' + result.error, 'red');
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message, 'red');
+            }
+        }
+
+        // 2. Join Game
+        async function joinGame() {
+            const gameId = document.getElementById('joinGameId').value.trim();
+            const playerName = document.getElementById('joinName').value.trim();
+
+            if (!gameId || !playerName) {
+                showMessage('Enter both Game ID and Name!', 'red');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gameId, playerName })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentGameId = result.data.gameId;
+                    displayGameInfo(result.data);
+                    updatePlayerList(result.data.players);
+                    
+                    // Find the joining player's color
+                    const joiningPlayer = result.data.players.find(p => p.playerName === playerName);
+                    showMessage(`✅ Joined! You are ${joiningPlayer.color.toUpperCase()}`, 'green');
+                } else {
+                    showMessage('❌ ' + result.error, 'red');
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message, 'red');
+            }
+        }
+
+        // 3. Start Game
+        async function startGame() {
+            const gameId = document.getElementById('startGameId').value.trim();
+
+            if (!gameId) {
+                showMessage('Enter Game ID!', 'red');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gameId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayGameInfo(result.data);
+                    showMessage('✅ Game Started!', 'green');
+                } else {
+                    showMessage('❌ ' + result.error, 'red');
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message, 'red');
+            }
+        }
+
+        // 4. Get Game Details
+        async function getGameDetails() {
+    const gameId = document.getElementById('detailsGameId').value.trim();
+
+    if (!gameId) {
+        showMessage('Enter Game ID!', 'red');
+        return;
+    }
+
+    console.log('Fetching game:', gameId);  // ✅ Add this
+    console.log('URL:', `${API_URL}/${gameId}`);  // ✅ Add this
+
+    try {
+        const response = await fetch(`${API_URL}/${gameId}`);
+        console.log('Response status:', response.status);  // ✅ Add this
+        console.log('Response headers:', response.headers.get('content-type'));  // ✅ Add this
+        
+        const result = await response.json();
+
+        if (response.ok) {
+            displayGameInfo(result.data);
+            updatePlayerList(result.data.players);
+            showMessage('✅ Game details loaded!', 'green');
+        } else {
+            showMessage('❌ ' + result.error, 'red');
+        }
+    } catch (error) {
+        console.error('Full error:', error);  // ✅ Add this
+        showMessage('❌ Error: ' + error.message, 'red');
+    }
+}
+
+        // Display game info
+        function displayGameInfo(data) {
+            document.getElementById('gameInfo').style.display = 'block';
+            document.getElementById('displayGameId').textContent = data.gameId;
+            document.getElementById('displayMode').textContent = data.mode;
+            document.getElementById('displayStatus').textContent = data.gameStatus;
+            document.getElementById('displayTurn').textContent = (data.currentTurn + 1) + ' (' + (data.players[data.currentTurn]?.playerName || 'N/A') + ')';
+            document.getElementById('displayStartTime').textContent = data.startTime ? new Date(data.startTime).toLocaleString() : 'Not started yet';
+        }
+
+        // Update player list
+        function updatePlayerList(players) {
+            const playerList = document.getElementById('playerList');
+            const playerCount = document.getElementById('playerCount');
+            
+            playerCount.textContent = players.length;
+            playerList.innerHTML = '';
+
+            if (players.length === 0) {
+                playerList.innerHTML = '<p style="color:#999;">No players yet</p>';
+                return;
+            }
+
+            players.forEach((player, index) => {
+                const p = document.createElement('p');
+                p.style.borderLeft = `5px solid ${player.color}`;
+                p.style.paddingLeft = '10px';
+                p.style.marginBottom = '8px';
+                p.innerHTML = `
+                    <strong>Player ${index + 1}:</strong> ${player.playerName} 
+                    | <strong style="color:${player.color}">●</strong> ${player.color.toUpperCase()} 
+                    | 🎮 ${player.pawns.length} pawns
+                `;
+                playerList.appendChild(p);
+            });
+        }
+
+        // Copy game ID
+        function copyGameId() {
+            const gameId = document.getElementById('displayGameId').textContent;
+            navigator.clipboard.writeText(gameId);
+            showMessage('📋 Game ID copied!', 'blue');
+        }
+
+        // Show message
+        function showMessage(msg, color) {
+            const div = document.getElementById('messages');
+            const p = document.createElement('p');
+            p.style.color = color;
+            p.style.padding = '8px';
+            p.style.backgroundColor = color === 'red' ? '#ffe6e6' : color === 'green' ? '#e6ffe6' : '#e6f3ff';
+            p.style.borderRadius = '4px';
+            p.style.marginBottom = '5px';
+            p.textContent = msg;
+            div.insertBefore(p, div.firstChild);
+            
+            setTimeout(() => p.remove(), 5000);
+        }
+    </script>
+</body>
+</html>

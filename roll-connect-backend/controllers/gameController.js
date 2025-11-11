@@ -136,17 +136,56 @@ const startGame = async (req, res) => {
     game.startTime = new Date();
     await game.save();
 
-    res.status(200).json({ message: "Game started successfully",
-     data: {
+    res.status(200).json({ 
+    message: "Game started successfully",
+    data: {
         gameId: game.gameId,
         mode: game.mode,
         players: game.players,
         gameStatus: game.gameStatus,
-     }});
+        currentTurn: game.currentTurn,     
+        startTime: game.startTime,         
+        endTime: game.endTime,             
+        duration: game.duration            
+    }
+});
 } catch (error) {
     console.error("Error starting game:", error);
     res.status(500).json({ error: "Failed to start game" });    
 }
 };
 
-module.exports = {createGame, joinGame, startGame};  
+const getGameDetails = async (req, res) => {
+    try {
+        const { gameId } = req.params; 
+
+        if (!gameId) {
+            return res.status(400).json({ error: "Game ID is required" });
+        }
+
+        const game = await Game.findOne({ gameId: gameId});
+
+        if (!game){
+            return res.status(404).json({ error: "Game not found" });
+        }
+        res.status(200).json({
+            data: {
+                gameId: game.gameId,
+                mode: game.mode,
+                players: game.players,
+                gameStatus: game.gameStatus,
+                currentTurn: game.currentTurn,
+                createdAt: game.createdAt,
+                startTime: game.startTime,
+                endTime: game.endTime,
+                duration: game.duration
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching game details:", error);
+        res.status(500).json({ error: "Failed to fetch game details" });
+    }
+};
+
+
+module.exports = {createGame, joinGame, startGame, getGameDetails};  
