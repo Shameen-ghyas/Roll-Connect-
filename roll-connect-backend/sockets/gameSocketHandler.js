@@ -21,10 +21,10 @@ module.exports = (io) => {
                     return;
                 }
 
-                if (game.players.length >= 4) {
-                    socket.emit('error', {message: "Game is full"});
-                    return;
-                }
+                // if (game.players.length >= 4) {
+                //     socket.emit('error', {message: "Game is full"});
+                //     return;
+                // }
 
                 if (game.gameStatus === 'active') {
                     socket.emit('error', {message: "Game already in progress"});
@@ -32,6 +32,11 @@ module.exports = (io) => {
                 }
 
                 const existingPlayer = game.players.find(p => p.playerName === playerName);
+                
+                if (!existingPlayer && game.players.length >= 4) {
+                    socket.emit('error', { message: 'Game is full' });
+                    return;  
+                }
 
                 if (!existingPlayer) {
                     const usedColors = game.players.map(p => p.color);
@@ -56,6 +61,7 @@ module.exports = (io) => {
                 socket.playerName = playerName; 
 
                 io.to(gameId).emit('player-joined', {
+                    gameId: game.gameId,
                     mode: game.mode,
                     players: game.players,
                     newPlayer: playerName,
@@ -115,6 +121,9 @@ module.exports = (io) => {
 
                 const game = await Game.findOne({gameId});
                 if (!game) return; 
+
+                const wasInGame = game.players.some(p => p.playerName === playerName);
+                if (!wasInGame) return;
 
                 // remove player from game
                 game.players = game.players.filter(p => p.playerName !== playerName);

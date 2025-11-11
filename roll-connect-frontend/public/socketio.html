@@ -91,18 +91,23 @@
                 showRealtimeMessage(' Disconnected from server');
             });
 
-            // Listen for player joined event
-            socket.on('player-joined', (data) => {
-                console.log('Player joined:', data);
-                showRealtimeMessage(` ${data.newPlayer} joined the game!`);
-                updatePlayerList(data.players);
-                document.getElementById('displayStatus').textContent = data.gameStatus;
-                
-                // Enable start button if we have enough players
-                if (data.players.length >= 2) {
-                    document.getElementById('startBtn').disabled = false;
-                }
-            });
+           // Listen for player joined event
+socket.on('player-joined', (data) => {
+    console.log('Player joined:', data);
+    showRealtimeMessage(`🎮 ${data.newPlayer} joined the game!`);
+    updatePlayerList(data.players);
+    
+  
+    document.getElementById('displayGameId').textContent = data.gameId;
+    document.getElementById('displayMode').textContent = data.mode;
+    document.getElementById('displayStatus').textContent = data.gameStatus;
+    document.getElementById('gameInfo').style.display = 'block';
+    
+    // Enable start button if we have enough players
+    if (data.players.length >= 2) {
+        document.getElementById('startBtn').disabled = false;
+    }
+});
 
             // Listen for game started event
             socket.on('game-started', (data) => {
