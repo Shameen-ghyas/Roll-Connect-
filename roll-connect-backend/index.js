@@ -4,17 +4,38 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');   
 const cors = require('cors');
 require('dotenv').config();
+const session = require('express-session');
+const passport = require('./config/passport');
+
+
+
+
+
 const leaderboardRoutes = require('./routes/leaderboardRoutes.js');
 const gameRoutes = require('./routes/gameRoutes.js');
+const authRoutes = require('./routes/authRoutes.js');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {cors: {origin: "*"}});
 
+app.use(cors({
+    origin: true,  
+    credentials: true,
+}));
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'rollconnect2025secretkey',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 day
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // MongoDB connection   
 connectDB();
@@ -22,6 +43,7 @@ connectDB();
 // Routes
 app.use('/api/leaderboard', leaderboardRoutes); 
 app.use('/api/game', gameRoutes);
+app.use('/auth', authRoutes);
 
 
 app.get('/', (req, res) => {
