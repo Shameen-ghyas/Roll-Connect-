@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roll-Connect - Online & Offline Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        .mode-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        .section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        h2 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        input, select, button {
+            padding: 12px;
+            margin: 5px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input, select {
+            width: calc(50% - 12px);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .player-input {
+            margin: 10px 0;
+        }
+        .player-card {
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 5px solid;
+            background: white;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .player-card.red { border-color: #e74c3c; }
+        .player-card.blue { border-color: #3498db; }
+        .player-card.green { border-color: #2ecc71; }
+        .player-card.yellow { border-color: #f39c12; }
+        #gameInfo {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            margin: 20px 0;
+        }
+        .current-turn {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 5px solid #ffc107;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .connection-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        #realtimeMessages {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .copy-btn {
+            background: #2ecc71;
+            padding: 8px 15px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Roll-Connect</h1>
+        <p class="subtitle">Test Online & Offline Modes</p>
+
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('online')">
+                🌐 Online Mode
+            </button>
+            <button class="mode-btn" onclick="switchMode('offline')">
+                🏠 Offline Mode (Hot Seat)
+            </button>
+        </div>
+
+        <!-- ONLINE MODE -->
+        <div id="onlineMode" class="section active">
+            <h2>🌐 Online Multiplayer</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <h3>Create Game</h3>
+                <input type="text" id="onlineCreateName" placeholder="Your Name">
+                <button onclick="createOnlineGame()">Create Game</button>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Join Game</h3>
+                <input type="text" id="onlineJoinGameId" placeholder="Game ID">
+                <input type="text" id="onlineJoinName" placeholder="Your Name">
+                <button onclick="joinOnlineGame()">Join Game</button>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <button onclick="startOnlineGame()" id="startOnlineBtn" disabled>Start Game</button>
+            </div>
+
+            <div class="connection-status disconnected" id="connectionStatus">
+                ⚠️ Not Connected
+            </div>
+
+            <h3>📢 Real-Time Updates:</h3>
+            <div id="realtimeMessages"></div>
+        </div>
+
+        <!-- OFFLINE MODE -->
+        <div id="offlineMode" class="section">
+            <h2>🏠 Hot Seat Mode</h2>
+            <p style="margin-bottom: 15px; color: #666;">
+                All players use the same device. Pass it to the next player after each turn!
+            </p>
+
+            <label>Number of Players:</label>
+            <select id="numPlayers" onchange="updatePlayerInputs()">
+                <option value="2">2 Players</option>
+                <option value="3">3 Players</option>
+                <option value="4">4 Players</option>
+            </select>
+
+            <div id="playerInputs"></div>
+
+            <button onclick="createOfflineGame()">Start Hot Seat Game</button>
+        </div>
+
+        <!-- Game Info (shared by both modes) -->
+        <div id="gameInfo">
+            <h2>📋 Game Information</h2>
+            <p><strong>Game ID:</strong> <span id="displayGameId"></span>
+                <button class="copy-btn" onclick="copyGameId()">Copy ID</button>
+            </p>
+            <p><strong>Mode:</strong> <span id="displayMode"></span></p>
+            <p><strong>Status:</strong> <span id="displayStatus"></span></p>
+            
+            <div class="current-turn" id="currentTurn"></div>
+            
+            <h3>👥 Players (<span id="playerCount">0</span>/4)</h3>
+            <div id="playerList"></div>
+
+            <button onclick="nextTurn()" id="nextTurnBtn" style="display:none;">
+                ➡️ Next Turn (Pass Device)
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/game';
+        const SOCKET_URL = 'http://localhost:5000';
+        
+        let socket;
+        let currentGameId = null;
+        let currentMode = 'online';
+        let currentGame = null;
+
+        // Switch between modes
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Update buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show/hide sections
+            document.getElementById('onlineMode').classList.remove('active');
+            document.getElementById('offlineMode').classList.remove('active');
+            document.getElementById(mode + 'Mode').classList.add('active');
+            
+            // Hide game info when switching
+            document.getElementById('gameInfo').style.display = 'none';
+        }
+
+        // ==================== ONLINE MODE ====================
+
+        function initSocket() {
+            socket = io(SOCKET_URL);
+
+            socket.on('connect', () => {
+                console.log('✅ Socket connected:', socket.id);
+                document.getElementById('connectionStatus').className = 'connection-status connected';
+                document.getElementById('connectionStatus').textContent = '✅ Connected to Server';
+                showRealtimeMessage('✅ Connected to server!');
+            });
+
+            socket.on('disconnect', () => {
+                console.log('❌ Socket disconnected');
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+                document.getElementById('connectionStatus').textContent = '❌ Disconnected';
+                showRealtimeMessage('❌ Disconnected from server');
+            });
+
+            socket.on('player-joined', (data) => {
+                showRealtimeMessage(`🎮 ${data.newPlayer} joined the game!`);
+                updateGameDisplay(data);
+                
+                if (data.players.length >= 2) {
+                    document.getElementById('startOnlineBtn').disabled = false;
+                }
+            });
+
+            socket.on('game-started', (data) => {
+                showRealtimeMessage(`🚀 ${data.message}`);
+                document.getElementById('displayStatus').textContent = data.gameStatus;
+                document.getElementById('startOnlineBtn').disabled = true;
+                updatePlayerList(data.players);
+                updateCurrentTurn(data.currentTurn, data.players);
+            });
+
+            socket.on('player-left', (data) => {
+                showRealtimeMessage(`👋 ${data.leftPlayer} left the game`);
+                updatePlayerList(data.players);
+            });
+
+            socket.on('player-disconnected', (data) => {
+                showRealtimeMessage(`⚠️ ${data.message}`);
+            });
+
+            socket.on('error', (data) => {
+                showMessage('❌ ' + data.message, 'error');
+            });
+        }
+
+        async function createOnlineGame() {
+            const playerName = document.getElementById('onlineCreateName').value.trim();
+
+            if (!playerName) {
+                showMessage('Enter your name!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playerName, mode: 'online' })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentGameId = result.data.gameId;
+                    currentGame = result.data;
+                    
+                    displayGameInfo(result.data);
+                    document.getElementById('onlineJoinGameId').value = currentGameId;
+                    showMessage('✅ Game created! Share the Game ID with friends.', 'success');
+                    
+                    if (!socket) initSocket();
+                    
+                    setTimeout(() => {
+                        socket.emit('join-game', { gameId: currentGameId, playerName });
+                    }, 500);
+                } else {
+                    showMessage('❌ ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function joinOnlineGame() {
+            const gameId = document.getElementById('onlineJoinGameId').value.trim();
+            const playerName = document.getElementById('onlineJoinName').value.trim();
+
+            if (!gameId || !playerName) {
+                showMessage('Enter Game ID and Name!', 'error');
+                return;
+            }
+
+            currentGameId = gameId;
+
+            if (!socket) initSocket();
+
+            setTimeout(() => {
+                socket.emit('join-game', { gameId, playerName });
+            }, 500);
+        }
+
+        function startOnlineGame() {
+            if (!currentGameId) {
+                showMessage('No active game!', 'error');
+                return;
+            }
+
+            socket.emit('start-game', { gameId: currentGameId });
+        }
+
+        // ==================== OFFLINE MODE ====================
+
+        function updatePlayerInputs() {
+            const numPlayers = parseInt(document.getElementById('numPlayers').value);
+            const container = document.getElementById('playerInputs');
+            container.innerHTML = '';
+
+            const defaultNames = ['Ahmed', 'Sara', 'Ali', 'Fatima'];
+
+            for (let i = 0; i < numPlayers; i++) {
+                const div = document.createElement('div');
+                div.className = 'player-input';
+                div.innerHTML = `
+                    <input type="text" id="player${i+1}" placeholder="Player ${i+1} Name" value="${defaultNames[i]}">
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        async function createOfflineGame() {
+            const numPlayers = parseInt(document.getElementById('numPlayers').value);
+            const offlinePlayers = [];
+
+            for (let i = 1; i <= numPlayers; i++) {
+                const name = document.getElementById(`player${i}`).value.trim();
+                if (!name) {
+                    showMessage(`Please enter name for Player ${i}`, 'error');
+                    return;
+                }
+                offlinePlayers.push(name);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        mode: 'offline',
+                        offlinePlayers: offlinePlayers
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentGame = result.data;
+                    currentGameId = result.data.gameId;
+                    displayGameInfo(result.data);
+                    document.getElementById('nextTurnBtn').style.display = 'block';
+                    showMessage('✅ Hot Seat game started! Pass the device on each turn.', 'success');
+                } else {
+                    showMessage('❌ ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function nextTurn() {
+            if (!currentGame) return;
+
+            const nextTurnIndex = (currentGame.currentTurn + 1) % currentGame.players.length;
+            currentGame.currentTurn = nextTurnIndex;
+
+            updateCurrentTurn(currentGame.currentTurn, currentGame.players);
+            
+            const nextPlayer = currentGame.players[nextTurnIndex];
+            showMessage(`👉 Pass device to ${nextPlayer.playerName} (${nextPlayer.color})`, 'info');
+        }
+
+        // ==================== SHARED FUNCTIONS ====================
+
+        function displayGameInfo(data) {
+            document.getElementById('gameInfo').style.display = 'block';
+            document.getElementById('displayGameId').textContent = data.gameId;
+            document.getElementById('displayMode').textContent = data.mode;
+            document.getElementById('displayStatus').textContent = data.gameStatus;
+            
+            updatePlayerList(data.players);
+            
+            if (data.currentTurn !== undefined) {
+                updateCurrentTurn(data.currentTurn, data.players);
+            }
+        }
+
+        function updateGameDisplay(data) {
+            document.getElementById('displayGameId').textContent = data.gameId;
+            document.getElementById('displayMode').textContent = data.mode;
+            document.getElementById('displayStatus').textContent = data.gameStatus;
+            document.getElementById('gameInfo').style.display = 'block';
+            updatePlayerList(data.players);
+        }
+
+        function updateCurrentTurn(turnIndex, players) {
+            const currentPlayer = players[turnIndex];
+            const turnDiv = document.getElementById('currentTurn');
+            turnDiv.style.display = 'block';
+            turnDiv.innerHTML = `
+                🎮 Current Turn: <span style="color:${currentPlayer.color}">${currentPlayer.playerName} (${currentPlayer.color.toUpperCase()})</span>
+            `;
+        }
+
+        function updatePlayerList(players) {
+            const playerList = document.getElementById('playerList');
+            const playerCount = document.getElementById('playerCount');
+            
+            playerCount.textContent = players.length;
+            playerList.innerHTML = '';
+
+            players.forEach((player, index) => {
+                const card = document.createElement('div');
+                card.className = `player-card ${player.color}`;
+                card.innerHTML = `
+                    <div>
+                        <strong>Player ${index + 1}:</strong> ${player.playerName}
+                        <br>
+                        <small>Color: ${player.color.toUpperCase()} | 🎮 ${player.pawns.length} pawns</small>
+                    </div>
+                    <div style="font-size: 24px;">
+                        ${player.color === 'red' ? '🔴' : ''}
+                        ${player.color === 'blue' ? '🔵' : ''}
+                        ${player.color === 'green' ? '🟢' : ''}
+                        ${player.color === 'yellow' ? '🟡' : ''}
+                    </div>
+                `;
+                playerList.appendChild(card);
+            });
+        }
+
+        function copyGameId() {
+            const gameId = document.getElementById('displayGameId').textContent;
+            navigator.clipboard.writeText(gameId);
+            showMessage('📋 Game ID copied!', 'info');
+        }
+
+        function showRealtimeMessage(msg) {
+            const div = document.getElementById('realtimeMessages');
+            const p = document.createElement('p');
+            const time = new Date().toLocaleTimeString();
+            p.textContent = `[${time}] ${msg}`;
+            p.style.marginBottom = '5px';
+            div.insertBefore(p, div.firstChild);
+        }
+
+        function showMessage(msg, type) {
+            const div = document.getElementById('messages');
+            const p = document.createElement('div');
+            p.className = `message ${type}`;
+            p.textContent = msg;
+            div.insertBefore(p, div.firstChild);
+            
+            setTimeout(() => p.remove(), 5000);
+        }
+
+        // Initialize
+        updatePlayerInputs();
+
+        window.onbeforeunload = () => {
+            if (socket && currentGameId && currentMode === 'online') {
+                socket.emit('leave-game', { gameId: currentGameId });
+            }
+        };
+    </script>
+</body>
+</html>

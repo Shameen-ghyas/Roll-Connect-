@@ -172,6 +172,52 @@ module.exports = (io) => {
             }
         });
 
+        socket.on('roll-dice', async (data) => {
+            try{
+                const {gameId, playerName} = data;
+
+                const game = await Game.findOne({gameId: gameId});
+
+                if (!game) {
+                    socket.emit('error', { message: 'Game not found' });
+                    return;
+                }
+                // check if game is active
+                if (!game.gameStatus === 'active') {
+                    socket.emit('error', { message: 'Game is not active. Cannot roll dice.' });
+                    return;
+                }
+                // check if it's the player's turn
+                const currentPlayer = game.players[game.currentTurn];
+                if (currentPlayer.playerName !== playerName) {
+                    socket.emit('error', { message: `Not your turn! It's ${currentPlayer.playerName}'s to roll the dice.` });
+                    return;
+                }
+                // roll the dice
+                const diceValue = Math.floor(Math.random() * 6) + 1;
+                // update the game with the new dice value
+                game.diceValue = diceValue;
+                game.lastRoll = {  
+                    playerName: playerName,
+                    timestamp: new Date()
+                };  
+                await game.save();
+
+                //notify all players in the game room about the dice roll
+                io.to(gameId).emit('dice-rolled', {
+                    message: `${playerName} rolled a ${diceValue}`,
+                    diceValue: diceValue,
+                    playerName: playerName,
+                    currentTurn: game.currentTurn
+                });
+                console.log(`Player ${playerName} rolled a ${diceValue} in game ${gameId}`);    
+
+            }catch (error) {
+                console.error("Error in roll-dice:", error);
+                socket.emit('error', {message: "Failed to roll dice"});
+            }
+        });
+        
         //handle disconnect 
         socket.on('disconnect', () => {
             console.log("Player disconnected:", socket.id);

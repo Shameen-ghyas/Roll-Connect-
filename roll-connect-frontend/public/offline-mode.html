@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hot Seat Mode Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        input, button, select {
+            padding: 12px;
+            margin: 5px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .player-input {
+            margin: 10px 0;
+        }
+        .player-card {
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 5px solid;
+            background: white;
+            border-radius: 5px;
+        }
+        .player-card.red { border-color: #e74c3c; }
+        .player-card.blue { border-color: #3498db; }
+        .player-card.green { border-color: #2ecc71; }
+        .player-card.yellow { border-color: #f39c12; }
+        #gameInfo {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        .current-turn {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 5px solid #ffc107;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🎲 Roll-Connect - Hot Seat Mode Test</h1>
+
+    <!-- Setup Offline Game -->
+    <div class="section">
+        <h2>Setup Offline Game (Hot Seat)</h2>
+        
+        <label>Number of Players:</label>
+        <select id="numPlayers" onchange="updatePlayerInputs()">
+            <option value="2">2 Players</option>
+            <option value="3">3 Players</option>
+            <option value="4">4 Players</option>
+        </select>
+
+        <div id="playerInputs">
+            <div class="player-input">
+                <input type="text" id="player1" placeholder="Player 1 Name" value="for eg: Ahmed">
+            </div>
+            <div class="player-input">
+                <input type="text" id="player2" placeholder="Player 2 Name" value="for eg: Sara">
+            </div>
+        </div>
+
+        <button onclick="createOfflineGame()">Start Hot Seat Game</button>
+    </div>
+
+    <!-- Game Info -->
+    <div id="gameInfo">
+        <h2>📋 Game Started!</h2>
+        <p><strong>Game ID:</strong> <span id="displayGameId"></span></p>
+        <p><strong>Mode:</strong> <span id="displayMode"></span></p>
+        <p><strong>Status:</strong> <span id="displayStatus"></span></p>
+        
+        <div class="current-turn" id="currentTurn"></div>
+        
+        <h3>👥 Players:</h3>
+        <div id="playerList"></div>
+
+        <button onclick="nextTurn()" style="background:#2196F3;">Next Turn (Pass Device)</button>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages"></div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/game';
+        let currentGame = null;
+
+        // Update player input fields based on selection
+        function updatePlayerInputs() {
+            const numPlayers = parseInt(document.getElementById('numPlayers').value);
+            const container = document.getElementById('playerInputs');
+            container.innerHTML = '';
+
+            const defaultNames = ['Ahmed', 'Sara', 'Ali', 'Fatima'];
+
+            for (let i = 0; i < numPlayers; i++) {
+                const div = document.createElement('div');
+                div.className = 'player-input';
+                div.innerHTML = `
+                    <input type="text" id="player${i+1}" placeholder="Player ${i+1} Name" value="for eg: ${defaultNames[i]}">
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // Create offline game
+        async function createOfflineGame() {
+            const numPlayers = parseInt(document.getElementById('numPlayers').value);
+            const offlinePlayers = [];
+
+            // Collect player names
+            for (let i = 1; i <= numPlayers; i++) {
+                const name = document.getElementById(`player${i}`).value.trim();
+                if (!name) {
+                    showMessage(`Please enter name for Player ${i}`, 'error');
+                    return;
+                }
+                offlinePlayers.push(name);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        mode: 'offline',
+                        offlinePlayers: offlinePlayers
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentGame = result.data;
+                    displayGameInfo(currentGame);
+                    showMessage('✅ Hot Seat game started! Pass the device to each player on their turn.', 'success');
+                } else {
+                    showMessage('❌ ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Display game info
+        function displayGameInfo(data) {
+            document.getElementById('gameInfo').style.display = 'block';
+            document.getElementById('displayGameId').textContent = data.gameId;
+            document.getElementById('displayMode').textContent = data.mode;
+            document.getElementById('displayStatus').textContent = data.gameStatus;
+            
+            updateCurrentTurn(data.currentTurn, data.players);
+            updatePlayerList(data.players);
+        }
+
+        // Update current turn display
+        function updateCurrentTurn(turnIndex, players) {
+            const currentPlayer = players[turnIndex];
+            const turnDiv = document.getElementById('currentTurn');
+            turnDiv.innerHTML = `
+                🎮 Current Turn: <span style="color:${currentPlayer.color}">${currentPlayer.playerName} (${currentPlayer.color.toUpperCase()})</span>
+            `;
+        }
+
+        // Update player list
+        function updatePlayerList(players) {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+
+            players.forEach((player, index) => {
+                const card = document.createElement('div');
+                card.className = `player-card ${player.color}`;
+                card.innerHTML = `
+                    <strong>Player ${index + 1}:</strong> ${player.playerName} 
+                    | <strong style="color:${player.color}">●</strong> ${player.color.toUpperCase()} 
+                    | 🎮 ${player.pawns.length} pawns
+                `;
+                playerList.appendChild(card);
+            });
+        }
+
+        // Simulate next turn (for testing)
+        async function nextTurn() {
+            if (!currentGame) {
+                showMessage('No active game', 'error');
+                return;
+            }
+
+            // Calculate next turn
+            const nextTurnIndex = (currentGame.currentTurn + 1) % currentGame.players.length;
+            currentGame.currentTurn = nextTurnIndex;
+
+            // Update display
+            updateCurrentTurn(currentGame.currentTurn, currentGame.players);
+            
+            const nextPlayer = currentGame.players[nextTurnIndex];
+            showMessage(`👉 Pass device to ${nextPlayer.playerName} (${nextPlayer.color})`, 'success');
+
+            // TODO: Later we'll update this on the server side when implementing turn management
+        }
+
+        // Show message
+        function showMessage(msg, type) {
+            const div = document.getElementById('messages');
+            const p = document.createElement('div');
+            p.className = `message ${type}`;
+            p.textContent = msg;
+            div.insertBefore(p, div.firstChild);
+
+            setTimeout(() => p.remove(), 5000);
+        }
+
+        // Initialize with 2 players
+        updatePlayerInputs();
+    </script>
+</body>
+</html>

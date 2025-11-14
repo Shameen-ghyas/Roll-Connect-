@@ -37,18 +37,7 @@ const gameSchema = new mongoose.Schema({
             ],
             score: { type: Number, default: 0 },
             wins: { type: Number, default: 0 },
-            startTime: {
-                type: Date,
-                default: null
-            },
-            endTime: {
-                type: Date,
-                default: null
-            },
-            duration: {
-                type: Number,
-                default: 0
-            },
+
         }
     ],
 
@@ -62,7 +51,56 @@ const gameSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    createdAt: { type: Date, default: Date.now() }
+
+    diceValue: {
+        type: Number,
+        default: null,
+        min: 1,
+        max: 6
+    },
+
+    lastRoll: {
+        playerName: String,
+        timestamp: Date 
+    }, 
+
+    consecutiveSixes: {
+        type: Number,
+        default: 0
+    },
+
+    extraTurn: {
+        type: Boolean,
+        default: false
+    },
+
+    extraTurnReason: {
+        type: String,
+        default: null,  
+        enum: ['rolled a six', 'captured a pawn','pawn_finished', null]
+    },
+
+    waitingForPawnMove: {
+        type: Boolean,
+        default: false
+    },
+
+    startTime: {
+        type: Date,
+        default: null
+    },
+    endTime: {
+        type: Date,
+        default: null
+    },
+    duration: {
+        type: Number,
+        default: 0
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now()
+    }
 });
 
 module.exports = mongoose.model('Game', gameSchema); 

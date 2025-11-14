@@ -6,18 +6,59 @@ const availableColors = ['red', 'blue', 'green', 'yellow'];
 //create a new game
 const createGame = async (req, res) => {
     try {
-        const { mode, playerName } = req.body;
-
-        if (!playerName) {
-            return res.status(400).json({ error: "Player name is required" });
-        }
-
+        const { mode, playerName, offlinePlayers } = req.body;
+        
         if (!mode || !['offline', 'online'].includes(mode)) {
             return res.status(400).json({ error: "Invalid or missing game mode" });
         }
 
         const gameId = uuidv4();
 
+        // for offline mode
+        if (mode === 'offline') {
+            if (!offlinePlayers || !Array.isArray(offlinePlayers) || offlinePlayers.length < 2 || offlinePlayers.length > 4) {
+                return res.status(400).json({ error: "Offline mode requires 2 to 4 players" });
+            }
+            const players = offlinePlayers.map((name, index) => ({
+                playerName: name,
+                color: availableColors[index],  
+                pawns: [
+                    { pawnId: 0, position: -1, isHome: false },
+                    { pawnId: 1, position: -1, isHome: false },
+                    { pawnId: 2, position: -1, isHome: false },
+                    { pawnId: 3, position: -1, isHome: false }
+                ]
+            }));
+
+            const newGame = new Game({
+                gameId: gameId,
+                mode: mode,
+                players: players,
+                gameStatus: 'active', // offline games start immediately    
+                currentTurn: 0,
+                startTime: new Date()
+            });
+
+            await newGame.save();
+            return res.status(201).json({
+                message: "Offline game created successfully and started successfully",
+                data: {
+                    gameId: newGame.gameId,
+                    mode: newGame.mode,
+                    players: newGame.players,
+                    gameStatus: newGame.gameStatus,
+                    currentTurn: newGame.currentTurn,
+                    currentPlayer: newGame.players[0].playerName
+                }
+            });
+        }
+        
+        // for online mode
+
+        if (!playerName) {
+            return res.status(400).json({ error: "Player name is required" });
+        }
+        
         const newGame = new Game({
             gameId: gameId,
             mode: mode,

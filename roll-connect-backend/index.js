@@ -8,12 +8,11 @@ const session = require('express-session');
 const passport = require('./config/passport');
 
 
-
-
-
 const leaderboardRoutes = require('./routes/leaderboardRoutes.js');
 const gameRoutes = require('./routes/gameRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
+const diceRoutes = require('./routes/diceRoutes.js');
+const turnRoutes = require('./routes/turnRoutes.js');
 
 const app = express();
 const server = http.createServer(app);
@@ -44,6 +43,8 @@ connectDB();
 app.use('/api/leaderboard', leaderboardRoutes); 
 app.use('/api/game', gameRoutes);
 app.use('/auth', authRoutes);
+app.use('/api/dice', diceRoutes);
+app.use('/api/turn', turnRoutes);
 
 
 app.get('/', (req, res) => {
