@@ -17,7 +17,7 @@ const rollDice = async (req, res) => {
             return res.status(404).json({ message: 'Game not found' });
         }
         // check if game is active
-        if (!game.gameStatus === 'active') {
+        if (game.gameStatus !== 'active') {
             return res.status(400).json({ message: 'Game is not active. Cannot roll dice.' });
         }
         // check if it's the player's turn

@@ -183,7 +183,7 @@ module.exports = (io) => {
                     return;
                 }
                 // check if game is active
-                if (!game.gameStatus === 'active') {
+                if (game.gameStatus !== 'active') {
                     socket.emit('error', { message: 'Game is not active. Cannot roll dice.' });
                     return;
                 }
@@ -218,6 +218,52 @@ module.exports = (io) => {
             }
         });
         
+        socket.on('next-turn', async (data) => {
+            try {
+                const {gameId} = data; 
+                const game = await Game.findOne({gameId});
+
+                if (!game) {
+                    socket.emit('error', {message: "Game not found"});
+                    return; 
+                }
+
+                // check for extra turn
+                if (game.extraTurn) {
+                    game.extraTurn = false;
+                    game.extraTurnReason = null;
+                    game.waitingForPawnMove = false;
+                    game.diceValue = null;
+                    await game.save();
+
+                    io.to(gameId).emit('extra-turn-granted', {
+                        currentPlayer: game.players[game.currentTurn].playerName,
+                        message: 'Roll again! Extra turn granted'
+                    });
+                    return; 
+                }
+                // move to next turn
+                const nextTurnIndex = (game.currentTurn + 1) % game.players.length;
+                game.currentTurn = nextTurnIndex;
+                game.consecutiveSixes = 0;
+                game.extraTurn = false;
+                game.waitingForPawnMove = false;
+                game.diceValue = null;
+                await game.save();
+
+                io.to(gameId).emit('turn-changed', {
+                    currentTurn: game.currentTurn,
+                    currentPlayer: game.players[nextTurnIndex].playerName,
+                    message: `${game.players[nextTurnIndex].playerName}'s turn`
+                });
+                console.log(`Turn moved to ${game.players[nextTurnIndex].playerName}`);
+            } catch (error) {
+                console.error("socket next-turn error:", error);
+                socket.emti('error', {message: "Failed to move turn"});
+            }
+        });
+
+
         //handle disconnect 
         socket.on('disconnect', () => {
             console.log("Player disconnected:", socket.id);
