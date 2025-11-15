@@ -259,7 +259,7 @@ module.exports = (io) => {
                 console.log(`Turn moved to ${game.players[nextTurnIndex].playerName}`);
             } catch (error) {
                 console.error("socket next-turn error:", error);
-                socket.emti('error', {message: "Failed to move turn"});
+                socket.emit('error', {message: "Failed to move turn"});
             }
         });
 

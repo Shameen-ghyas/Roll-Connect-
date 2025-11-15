@@ -13,6 +13,7 @@ const gameRoutes = require('./routes/gameRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
 const diceRoutes = require('./routes/diceRoutes.js');
 const turnRoutes = require('./routes/turnRoutes.js');
+const pawnRoutes = require('./routes/pawnRoutes.js');
 
 const app = express();
 const server = http.createServer(app);
@@ -45,6 +46,7 @@ app.use('/api/game', gameRoutes);
 app.use('/auth', authRoutes);
 app.use('/api/dice', diceRoutes);
 app.use('/api/turn', turnRoutes);
+app.use('/api/pawn', pawnRoutes);
 
 
 app.get('/', (req, res) => {

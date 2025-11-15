@@ -30,7 +30,7 @@ const gameSchema = new mongoose.Schema({
             },
             pawns: [
                 {
-                    pawnId: { type: String, required: true },
+                    pawnId: { type: Number, required: true },
                     position: { type: Number, default: -1 },
                     isHome: { type: Boolean, default: false }
                 }

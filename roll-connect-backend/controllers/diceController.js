@@ -81,7 +81,7 @@ const rollDice = async (req, res) => {
         const hasValidMoves = checkValidMoves(currentPlayer, diceValue);
 
         if (!hasValidMoves) {
-            nextTurnIndex = (game.currentTurn + 1) % game.players.length;
+            const nextTurnIndex = (game.currentTurn + 1) % game.players.length;
             game.currentTurn = nextTurnIndex;
             game.consecutiveSixes = 0;
             game.extraTurn = false;
@@ -157,10 +157,3 @@ module.exports = {
 
         
        
-       
-
-        
-
-module.exports = {
-    rollDice,
-};
