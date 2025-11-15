@@ -35,6 +35,8 @@ const gameSchema = new mongoose.Schema({
                     isHome: { type: Boolean, default: false }
                 }
             ],
+            rank: {type: Number, default: null},
+            finishedAt: {type: Date, default: null},
             score: { type: Number, default: 0 },
             wins: { type: Number, default: 0 },
 

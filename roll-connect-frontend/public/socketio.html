@@ -30,6 +30,15 @@
 
     <hr>
 
+    <!-- Add this after the Start Game section -->
+<hr>
+
+<h2>4. Move Pawn (Socket)</h2>
+<input type="number" id="movePawnId" placeholder="Pawn ID (0-3)" value="0" min="0" max="3">
+<button onclick="movePawnSocket()">Move Pawn</button>
+
+<hr>
+
     <!-- Start Game via Socket -->
     <h2>3. Start Game (Real-Time)</h2>
     <button onclick="startGameSocket()" id="startBtn" disabled>Start Game</button>
@@ -136,6 +145,12 @@ socket.on('player-joined', (data) => {
                 console.error('Socket error:', data);
                 showMessage('❌ ' + data.message, 'red');
             });
+            // Add this inside initSocket() function with your other socket.on listeners
+socket.on('pawn-moved', (data) => {
+    console.log('Pawn moved:', data);
+    showRealtimeMessage(`🎯 ${data.message}`);
+    showMessage(`✅ ${data.playerName}'s pawn ${data.pawnId} moved to position ${data.newPosition}`, 'green');
+});
         }
 
         // Create game (REST API)
@@ -270,6 +285,28 @@ socket.on('player-joined', (data) => {
             div.insertBefore(p, div.firstChild);
         }
 
+        // Add this function with your other socket functions
+function movePawnSocket() {
+    if (!currentGameId || !currentPlayerName) {
+        showMessage('No active game or player name!', 'red');
+        return;
+    }
+
+    const pawnId = parseInt(document.getElementById('movePawnId').value);
+
+    if (pawnId < 0 || pawnId > 3) {
+        showMessage('Pawn ID must be 0-3!', 'red');
+        return;
+    }
+
+    socket.emit('move-pawn', { 
+        gameId: currentGameId, 
+        playerName: currentPlayerName,
+        pawnId: pawnId
+    });
+    
+    showMessage(`Attempting to move pawn ${pawnId}...`, 'blue');
+}
         // Copy game ID
         function copyGameId() {
             const gameId = document.getElementById('displayGameId').textContent;

@@ -1,4 +1,6 @@
 const Game = require('../models/gameSchema.js');
+const Leaderboard = require('../models/leaderboardSchema.js');
+const {updateLeaderboard} = require('../utils/leaderboardHelper');
 
 const availableColors = ['red', 'blue', 'green', 'yellow']; 
 
@@ -263,6 +265,173 @@ module.exports = (io) => {
             }
         });
 
+        socket.on('move-pawn', async (data) => {
+        try {
+            const { gameId, playerName, pawnId } = data;
+
+            const game = await Game.findOne({ gameId });
+            if (!game) {
+                socket.emit('error', { message: 'Game not found' });
+                return;
+            }
+
+            const playerIndex = game.players.findIndex(p => p.playerName === playerName);
+            if (playerIndex === -1) {
+                socket.emit('error', { message: 'Player not found' });
+                return;
+            }
+
+            const player = game.players[playerIndex];
+            const pawn = player.pawns.find(p => p.pawnId === Number(pawnId));
+            
+            if (!pawn) {
+                socket.emit('error', { message: 'Pawn not found' });
+                return;
+            }
+
+            if (game.currentTurn !== playerIndex) {
+                socket.emit('error', { message: 'Not your turn' });
+                return;
+            }
+
+            if (!game.diceValue) {
+                socket.emit('error', { message: 'Roll dice first' });
+                return;
+            }
+
+            const diceValue = game.diceValue;
+
+            // Pawn movement logic
+            // safe spots
+            const SAFE_SPOTS = [0, 8, 13, 21, 26, 34, 39, 47];
+
+            if (pawn.position === -1) {
+                if (diceValue !== 6) {
+                    socket.emit('error', { message: 'Need 6 to start' });
+                    return;
+                }
+                pawn.position = 0;
+            } else {
+                let newPosition = pawn.position + diceValue;
+                if (newPosition >=1){
+                    pawn.position = 57;
+                    pawn.isHome = true;
+                    game.extraTurn = true;
+                game.extraTurnReason = 'pawn_finished';
+                
+                console.log(`${playerName}'s pawn reached home! Extra turn granted.`);
+                } else {
+                    pawn.position = newPosition;
+
+                    if (!SAFE_SPOTS.includes(newPosition)) {
+                        let captured = false;
+
+                        // check all players' pawns
+                        game.players.forEach((otherPlayer, otherIndex) => {
+                            // skip current player
+                            if (otherIndex === playerIndex) return; 
+
+                            // check each pawn of other players
+                            otherPlayer.pawns.forEach(otherPawn => {
+                                if (otherPawn.position === newPosition && otherPawn.position !== -1) {
+                                    // capture the pawn
+                                    otherPawn.position = -1;
+                                    otherPawn.isHome = false;
+                                    captured = true;
+
+                                    // broadcast capture event
+                                    io.to(gameId).emit('pawn-captured', {
+                                        capturedBy: playerName,
+                                        capturedPlayer: otherPlayer.playerName,
+                                        capturedPawnId: otherPawn.pawnId,
+                                        position: newPosition,
+                                        message: `${playerName} captured ${otherPlayer.playerName}'s pawn!`
+
+                                    });
+                                    console.log(`${playerName} captured ${otherPlayer.playerName}'s pawn at position ${newPosition}`);
+                                }
+                            });
+                        });
+
+                        // grant extra turn if captured
+                        if (captured) {
+                            game.extraTurn = true;
+                            game.extraTurnReason = 'captured a pawn';
+                        }
+                    }
+                }
+            }
+
+            game.diceValue = null;
+            game.waitingForPawnMove = false;
+
+            // check if the player finished all pawns
+            const allPawnsHome = player.pawns.every( p => p.isHome === true);
+
+            if (allPawnsHome && player.rank === null) {
+                // assign ranks
+                const finishedPlayers = game.players.filter( p => p.rank !== null);
+                player.finishedAt = new Date();
+
+                // notify other players 
+                io.to(gameId).emit('player-finished', {
+                    playerName: playerName,
+                    rank: player.rank,
+                    color: player.color,
+                    message: `${playerName} finished in Rank ${player.rank}!`
+                });
+                console.log(`${playerName} finished with Rank ${player.rank}`);
+
+                // check if the game should end
+                const playerWithoutRank = game.players.filter(p => p.rank === null);
+
+                if (playerWithoutRank.length === 1) {
+                    const lastPlayer = playerWithoutRank[0];
+                    lastPlayer.rank = game.players.length;
+                    lastPlayer.finishedAt = new Date(); 
+
+                    game.gameStatus = 'completed';
+                    game.endTime = new Date();
+
+                    const rankings = game.players
+                    .sort((a,b) => a.rank - b.rank)
+                    .map( p => ({ 
+                        playerName: p.playerName,
+                        color: p.color,
+                        rank: p.rank
+                    }));
+
+                    // broadcast game over with full rankings 
+                    io.to(gameId).emit('game-over', {
+                        message:"Game Over! Final Rankings:",
+                        rankings: rankings,
+                        winner: rankings[0].playerName
+                    });
+                    await updateLeaderboard(game);
+
+                    console.log("Game completed! Rankings:", rankings);
+                }
+            }
+            await game.save();
+
+            
+            // Broadcast to ALL players in the game room
+            io.to(gameId).emit('pawn-moved', {
+                playerName: playerName,
+                pawnId: pawnId,
+                newPosition: pawn.position,
+                isHome: pawn.isHome,
+                color: player.color,
+                message: `${playerName} moved pawn ${pawnId} to position ${pawn.position}`
+            });
+
+            console.log(`Pawn moved: ${playerName} - Pawn ${pawnId} to ${pawn.position}`);
+
+        } catch (error) {
+            console.error('Socket move-pawn error:', error);
+            socket.emit('error', { message: 'Failed to move pawn' });
+        }
+    });
 
         //handle disconnect 
         socket.on('disconnect', () => {
@@ -278,4 +447,6 @@ module.exports = (io) => {
 
 
     });
+
+    
 };
