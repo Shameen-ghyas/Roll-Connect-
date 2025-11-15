@@ -313,7 +313,7 @@ module.exports = (io) => {
                 pawn.position = 0;
             } else {
                 let newPosition = pawn.position + diceValue;
-                if (newPosition >=1){
+                if (newPosition >=57){
                     pawn.position = 57;
                     pawn.isHome = true;
                     game.extraTurn = true;

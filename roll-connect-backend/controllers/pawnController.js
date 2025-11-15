@@ -53,7 +53,7 @@ const movePawn = async (req, res) => {
             let newPosition = pawn.position + diceValue;
 
             // just move forward
-            if (newPosition >= 1
+            if (newPosition >= 57
             ) {
                 // Reached home
                 pawn.position = 57;
