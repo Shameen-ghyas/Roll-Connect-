@@ -1,60 +1,85 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const connectDB = require('./config/db');   
-const cors = require('cors');
-require('dotenv').config();
-const session = require('express-session');
-const passport = require('./config/passport');
 
+// index.js
+require("dotenv").config();
+const express = require("express");
+const http = require("http");
+const session = require("express-session");
+const passport = require("./config/passport.js");
+const mongoose = require("mongoose");
+const path = require("path");
 
-const leaderboardRoutes = require('./routes/leaderboardRoutes.js');
-const gameRoutes = require('./routes/gameRoutes.js');
-const authRoutes = require('./routes/authRoutes.js');
-const diceRoutes = require('./routes/diceRoutes.js');
-const turnRoutes = require('./routes/turnRoutes.js');
-const pawnRoutes = require('./routes/pawnRoutes.js');
+// Sockets handler (your existing file)
+const gameSocketHandler = require("./sockets/gameSocketHandler");
+
+// Route imports
+const authRoutes = require("./routes/authRoutes.js"); // Import auth routes
+const gameRoutes = require("./routes/gameRoutes.js"); // Import game-related routes
+const turnRoutes = require("./routes/turnRoutes.js"); // Import turn-related routes
+const pawnRoutes = require("./routes/pawnRoutes.js"); // Import pawn-related routes
+const leaderboardRoutes = require("./routes/leaderboardRoutes.js"); // Import leaderboard-related routes
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {cors: {origin: "*"}});
 
-app.use(cors({
-    origin: true,  
+// ---------------- enable socket.io ----------------
+const { Server } = require("socket.io");
+const io = new Server(server, {
+  cors: {
+    origin: true,
     credentials: true,
-}));
+  },
+  // path: "/socket.io"  // default
+});
 
-// Middleware
+// ---------------- MIDDLEWARE ----------------
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'rollconnect2025secretkey',
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 day
-}));
+  })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-// MongoDB connection   
-connectDB();
+// ---------------- ROUTES ----------------
+app.use("/auth", authRoutes); // Register auth routes
+app.use("/game", gameRoutes); // Register game routes
+app.use("/turn", turnRoutes); // Register turn routes
+app.use("/pawn", pawnRoutes); // Register pawn routes
+app.use("/leaderboard", leaderboardRoutes); // Register leaderboard routes
 
-// Routes
-app.use('/api/leaderboard', leaderboardRoutes); 
-app.use('/api/game', gameRoutes);
-app.use('/auth', authRoutes);
-app.use('/api/dice', diceRoutes);
-app.use('/api/turn', turnRoutes);
-app.use('/api/pawn', pawnRoutes);
+// ------------ STATIC FRONTEND SERVING ------------
+const frontendPath = path.join(__dirname, "../frontend/public");
+console.log("STATIC PATH =>", frontendPath);
+app.use(express.static(frontendPath));
 
-
-app.get('/', (req, res) => {
-    res.send('Roll Connect Backend is running');
+// Serve main page(s)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(frontendPath, "html_files", "ludo_main.html"));
+});
+app.get("/game", (req, res) => {
+  res.sendFile(path.join(frontendPath, "html_files", "ludo_main.html"));
+});
+app.get("/login_failed.html", (req, res) => {
+  res.sendFile(path.join(frontendPath, "html_files", "login_failed.html"));
 });
 
-const gameSocketHandler = require('./sockets/gameSocketHandler');
+// ------------- MONGODB CONNECTION -------------
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+// ---------------- start socket handler ----------------
 gameSocketHandler(io);
 
+// ---------------- START SERVER ----------------
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

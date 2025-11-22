@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" /> -->
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css_files/createJoin.css">
+    <title>Ludo Game</title>
+</head>
+<body>
+
+    <h1>LUDO GAME<br>
+    <div id="game-box">
+        <div class="top-bar">
+            <h1 id="roll">ROLL</h1>
+            <h1 id="connect">CONNECT</h1>
+        </div>
+        <img src="../images/background.jpg">
+        <div id="settings_icon">
+            <img src="../images/Settings-icon.png" alt="Settings"><h1>SETTINGS</h1>
+        </div>
+        <div id="leader_board_icon">
+            <img src="../images/leaderboard-icon-5.png" alt="Leaderboard" onclick="GoToLeaderboard()"><h1>LEADERBOARD</h1>
+        </div><br>
+        <div id="play_button">PLAY<span id="triangle_vertical" onclick="GoToThemeSelection()"> ▶</span></div> 
+        <div id="ins_button" onclick="GoToInstructions()">INSTRUCTIONS</div>
+        <div id="login-popup" class="popup active">
+            <input id="playerName" type="text" placeholder="Enter Name" />
+            <button id="guestPlayBtn">Play as Guest</button>
+            <button id="googleBtn">Login with Google</button>
+        </div>
+
+    </h1>
+    </div>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="../js/clientSocket.js"></script>
+
+    <script>
+    function GoToThemeSelection() {
+    window.location.href = "ludo_theme_selection.html"; // redirects to your theme selection page
+}
+    function GoToLeaderboard() {
+    window.location.href = "leaderboard.html"; // redirects to your leaderboard page
+}
+    function GoToInstructions() {
+    window.location.href = "instructions.html"; // redirects to your instructions page
+}
+</script>
+<script>
+document.getElementById('play_button').addEventListener('click', () => {
+  const name = document.getElementById('playerName').value.trim();
+  if (!name) return alert("Please enter your name");
+  localStorage.setItem('playerName', name);
+  // move to create/join screen
+  window.location.href = 'createJoin.html';
+});
+</script>
+
+
+</body>
+</html>

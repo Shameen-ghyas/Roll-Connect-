@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" /> -->
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css_files/ludo_Classic.css">
+
+
+
+
+    <title>Ludo Game</title>
+</head>
+
+<body>
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+      window.socket = io();  
+  </script>
+
+
+
+    <h1>LUDO GAME<br>
+    <div id="game-box">
+        <img src="../images/classic.jfif">
+        <div id="blurred_overlay">
+        <!-- <div class="dice-area"> -->
+        <div class="container">
+          <div class="dice-slot red-dice-slot">
+           <div class="dice">
+              <div class="face front"></div>
+              <div class="face back"></div>
+              <div class="face top"></div>
+              <div class="face bottom"></div>
+              <div class="face right"></div>
+              <div class="face left"></div>
+          </div>
+
+        </div>
+        <div class="player-name" id="red-name">-</div>
+        </div>
+    
+        <div class="dice-slot green-dice-slot">
+          <div class="dice">
+            <div class="face front"></div>
+            <div class="face back"></div>
+            <div class="face top"></div>
+            <div class="face bottom"></div>
+            <div class="face right"></div>
+            <div class="face left"></div>     
+
+        </div>
+        
+        </div>
+        <div class="player-name" id="green-name">-</div>
+      
+        <div class="dice-slot blue-dice-slot">
+          <div class="dice">
+            <div class="face front"></div>      
+            <div class="face back"></div>
+            <div class="face top"></div>  
+            <div class="face bottom"></div>
+            <div class="face right"></div>
+            <div class="face left"></div>   
+        </div>
+        </div>
+        <div class="player-name" id="blue-name">-</div>
+
+        <div class="dice-slot yellow-dice-slot">
+          <div class="dice">
+            <div class="face front"></div>      
+            <div class="face back"></div>
+            <div class="face top"></div>  
+            <div class="face bottom"></div>
+            <div class="face right"></div>
+            <div class="face left"></div>   
+        </div>
+        </div>
+        <div class="player-name" id="yellow-name">-</div>
+
+
+          <!-- Center Ludo board -->
+        <div id="ludo-board">
+        <div class="home red-home"></div>
+        <div class="home blue-home"></div>
+        <div class="home green-home"></div>
+        <div class="home yellow-home"></div>
+
+
+          <div class="player-home red-home">
+    <!-- Pawns directly in board -->
+            <div class="pawn-slot" style="top:77px; left:66px;"></div>
+            <div class="pawn-slot" style="top:157px; left:66px;"></div>
+            <div class="pawn-slot" style="top:77px; left:176px;"></div>
+            <div class="pawn-slot" style="top:157px; left:176px;"></div>
+            <div id="red1" class="pawn red-pawn" style="top:83px; left:72.5px;" data-index="-1"></div>
+            <div id="red2" class="pawn red-pawn" style="top:162px; left:72.5px;" data-index="-1"></div>
+            <div id="red3" class="pawn red-pawn" style="top:83px; left:181.5px;" data-index="-1"></div>
+            <div id="red4" class="pawn red-pawn" style="top:162px; left:181.5px;" data-index="-1"></div>
+
+          
+          </div>
+
+          <div class="player-home green-home">
+            <div class="pawn-slot" style="top:77px; left:66px;"></div>
+            <div class="pawn-slot" style="top:157px; left:66px;"></div>
+            <div class="pawn-slot" style="top:77px; left:176px;"></div>
+            <div class="pawn-slot" style="top:157px; left:176px;"></div>
+            <div id="green1" class="pawn green-pawn" style="top:83px; left:72.5px;" data-index="-1"></div>
+            <div id="green2" class="pawn green-pawn" style="top:162px; left:72.5px;" data-index="-1"></div>
+            <div id="green3" class="pawn green-pawn" style="top:83px; left:181.5px;" data-index="-1"></div>
+            <div id="green4" class="pawn green-pawn" style="top:162px; left:181.5px;" data-index="-1"></div>
+           
+
+          </div>
+
+          <div class="player-home blue-home">
+            <div class="pawn-slot" style="top:77px; left:66px;"></div>
+            <div class="pawn-slot" style="top:157px; left:66px;"></div>
+            <div class="pawn-slot"  style="top:77px; left:176px;"></div>
+            <div class="pawn-slot"  style="top:157px; left:176px;"></div>
+            <div id="blue1" class="pawn blue-pawn" style="top:83px; left:72.5px;" data-index="-1"></div>
+            <div id="blue2" class="pawn blue-pawn" style="top:162px; left:72.5px;" data-index="-1"></div>
+            <div id="blue3" class="pawn blue-pawn" style="top:83px; left:181.5px;" data-index="-1"></div>
+            <div id="blue4" class="pawn blue-pawn" style="top:162px; left:181.5px;" data-index="-1"></div>
+
+          
+          </div>
+
+          <div class="player-home yellow-home">
+            <div class="pawn-slot" style="top:77px; left:66px;"></div>
+            <div class="pawn-slot"  style="top:157px; left:66px;"></div>
+            <div class="pawn-slot"  style="top:77px; left:176px;"></div>
+            <div class="pawn-slot"  style="top:157px; left:176px;"></div>
+            <div id="yellow1" class="pawn yellow-pawn" style="top:83px; left:72.5px;" data-index="-1"></div>
+            <div id="yellow2" class="pawn yellow-pawn" style="top:162px; left:72.5px;" data-index="-1"></div>
+            <div id="yellow3" class="pawn yellow-pawn" style="top:83px; left:181.5px;" data-index="-1"></div>
+            <div id="yellow4" class="pawn yellow-pawn" style="top:162px; left:181.5px;" data-index="-1"></div>
+           
+
+          </div>
+
+           <div class="center-home">
+                <div class="triangle red"></div>
+                <div class="triangle green"></div>
+                <div class="triangle blue"></div>
+                <div class="triangle yellow"></div>
+            </div>
+            <!-- ==== LUDO MAIN PATH AND HOME PATH ==== -->
+
+          <!-- Red home path -->
+          <div class="path red-path" style="top: 563px; left: 296px;"></div>
+          <div class="path red-path" style="top: 607px; left: 336px;"></div>
+          <div class="path red-path" style="top: 563px; left: 336px;"></div>
+          <div class="path red-path" style="top: 518px; left: 336px;"></div>
+          <div class="path red-path" style="top: 473px; left: 336px;"></div>
+          <div class="path red-path" style="top: 428px; left: 336px;"></div>
+          <div class="path red-path" style="top: 383px; left: 336px;"></div>
+          <div class="path red-path" style="top: 563px; left: 296px;"></div>
+
+          <!-- Green home path -->
+          <div class="path green-path" style="top: 348px; left: 614px;"></div>
+          <div class="path green-path" style="top: 307px; left: 417px;"></div>
+          <div class="path green-path" style="top: 307px; left: 465px;"></div>
+          <div class="path green-path" style="top: 307px; left: 515px;"></div>
+          <div class="path green-path" style="top: 307px; left: 565px;"></div>
+          <div class="path green-path" style="top: 307px; left: 614px;"></div>
+          <div class="path green-path" style="top: 307px; left: 661px;"></div>
+
+          <!-- Blue home path -->
+           <div class="path blue-path" style="top: 46px; left: 377px;"></div>
+          <div class="path blue-path" style="top: 1px; left: 335px;"></div>
+          <div class="path blue-path" style="top: 46px; left: 335px;"></div>
+          <div class="path blue-path" style="top: 91px; left: 335px;"></div>
+          <div class="path blue-path" style="top: 136px; left: 335px;"></div>
+          <div class="path blue-path" style="top: 181px; left: 335px;"></div>
+          <div class="path blue-path" style="top: 224px; left: 335px;"></div>
+
+          <!-- Yellow home path -->
+           <div class="path yellow-path" style="top: 265px; left: 50px;"></div>
+          <div class="path yellow-path" style="top: 307px; left: 0px;"></div>
+          <div class="path yellow-path" style="top: 307px; left: 50px;"></div>
+          <div class="path yellow-path" style="top: 307px; left: 100px;"></div>
+          <div class="path yellow-path" style="top: 307px; left: 150px;"></div>
+          <div class="path yellow-path" style="top: 307px; left: 200px;"></div>
+          <div class="path yellow-path" style="top: 307px; left: 250px;"></div>
+          <!-- Safe/Stop squares -->
+          <div class="safe red-safe" style="top: 520px; left: 378px;">STOP</div>
+          <div class="safe green-safe" style="top: 265px; left: 565px;">STOP</div>
+          <div class="safe blue-safe" style="top: 95px; left: 295px;">STOP</div>
+          <div class="safe yellow-safe" style="top: 345px; left: 100px;">STOP</div>
+
+
+            <div class="v-line" style="left: 295px;"></div>
+            <div class="v-line" style="left: 335px;"></div>
+            <!-- <div class="v-line" style="left: 355px;"></div> -->
+            <div class="v-line" style="left: 375px;"></div>
+            <div class="v-line" style="left: 415px;"></div>
+
+            <div class="h-line" style="top: 265px;"></div>
+            <div class="h-line" style="top: 305px;"></div>
+            <div class="h-line" style="top: 345px;"></div>
+            <div class="h-line" style="top: 385px;"></div>
+              <!-- Horizontal lines for BLUE path -->
+            <div class="small-line h" style="top: 225px; left: 294px;"></div>
+            <div class="small-line h" style="top: 180px; left: 294px;"></div>
+            <div class="small-line h" style="top: 135px; left: 294px;"></div>
+            <div class="small-line h" style="top: 90px; left: 294px;"></div>
+            <div class="small-line h" style="top: 45px; left: 294px;"></div> 
+            <!-- <div class="small-line h" style="top: 250px; left: 60px;"></div> -->
+
+            <!-- Horizontal lines for red path -->
+            <div class="small-line h" style="top: 425px; left: 294px;"></div>
+            <div class="small-line h" style="top: 470px; left: 294px;"></div>
+            <div class="small-line h" style="top: 515px; left: 294px;"></div>
+            <div class="small-line h" style="top: 560px; left: 294px;"></div>
+            <div class="small-line h" style="top: 605px; left: 294px;"></div> 
+
+            <!-- Vertical lines for GREEN path -->
+            <div class="small-line v" style="top: 265px; left: 460px;"></div>
+            <div class="small-line v" style="top: 265px; left: 510px;"></div>
+            <div class="small-line v" style="top: 265px; left: 560px;"></div>
+            <div class="small-line v" style="top: 265px; left: 610px;"></div>
+            <div class="small-line v" style="top: 265px; left: 660px;"></div>
+            <!--vertical lines for YELLOW path -->
+            <div class="small-line v" style="top: 265px; left: 245px;"></div>
+            <div class="small-line v" style="top: 265px; left: 195px;"></div>
+            <div class="small-line v" style="top: 265px; left: 145px;"></div>
+            <div class="small-line v" style="top: 265px; left: 95px;"></div>
+            <div class="small-line v" style="top: 265px; left: 45px;"></div>
+
+
+                        
+
+    </div>
+    
+
+    </h1>
+    </div>
+    
+      <!-- <script>
+        const dice = document.querySelector('.dice');
+
+function randomDice() {
+  const random = Math.floor(Math.random() * 6) + 1;
+  rollDice(random);
+}
+
+function rollDice(random) {
+  dice.style.animation = 'rolling 1s';
+  setTimeout(() => {
+    switch (random) {
+      case 1: dice.style.transform = 'rotateX(0deg) rotateY(0deg)'; break;
+      case 2: dice.style.transform = 'rotateX(-90deg) rotateY(0deg)'; break;
+      case 3: dice.style.transform = 'rotateX(0deg) rotateY(90deg)'; break;
+      case 4: dice.style.transform = 'rotateX(0deg) rotateY(-90deg)'; break;
+      case 5: dice.style.transform = 'rotateX(90deg) rotateY(0deg)'; break;
+      case 6: dice.style.transform = 'rotateX(180deg) rotateY(0deg)'; break;
+    }
+    dice.style.animation = 'none';
+  }, 1000);
+}
+
+dice.addEventListener('click', randomDice);
+
+      </script> -->
+<!-- <script>
+const diceList = document.querySelectorAll('.dice');
+let currentPlayer = 0; // 0=red, 1=green, 2=yellow, 3=blue
+
+function randomDice() {
+  return Math.floor(Math.random() * 6) + 1;
+}
+
+function rollDice(dice, number) {
+  dice.style.animation = 'rolling 1s';
+  setTimeout(() => {
+    switch (number) {
+      case 1: dice.style.transform = 'rotateX(0deg) rotateY(0deg)'; break;
+      case 2: dice.style.transform = 'rotateX(-90deg) rotateY(0deg)'; break;
+      case 3: dice.style.transform = 'rotateX(0deg) rotateY(90deg)'; break;
+      case 4: dice.style.transform = 'rotateX(0deg) rotateY(-90deg)'; break;
+      case 5: dice.style.transform = 'rotateX(90deg) rotateY(0deg)'; break;
+      case 6: dice.style.transform = 'rotateX(180deg) rotateY(0deg)'; break;
+    }
+    dice.style.animation = 'none';
+  }, 1000);
+}
+
+// Function to enable only current player’s dice
+function updateTurn() {
+  diceList.forEach((d, i) => {
+    if (i === currentPlayer) {
+      d.style.pointerEvents = 'auto';
+      d.style.opacity = '1';
+      d.classList.add('glow');
+      d.style.filter = 'drop-shadow(0 0 25px var(--glow-color))';
+    } else {
+      d.style.pointerEvents = 'none';
+      d.style.opacity = '0.5';
+      d.classList.remove('glow');
+      d.style.filter = 'drop-shadow(0 0 5px gray)';
+    }
+  });
+}
+
+
+// Add click event to all dice
+diceList.forEach((d, i) => {
+  d.addEventListener('click', () => {
+    const num = randomDice();
+    rollDice(d, num);
+    console.log(`Player ${i + 1} rolled: ${num}`);
+    // Move to next player after 1.2s
+    setTimeout(() => {
+      currentPlayer = (currentPlayer + 1) % diceList.length;
+      updateTurn();
+    }, 1200);
+  });
+});
+
+
+
+updateTurn(); // initialize turn for red
+</script> -->
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
+<!-- Initialize Socket -->
+<script>
+  window.socket = io();
+  console.log("Socket.io initialized");
+</script>
+
+<script src="../js/board.js"></script>
+ 
+
+
+
+
+
+
+
+</body>
+</html>

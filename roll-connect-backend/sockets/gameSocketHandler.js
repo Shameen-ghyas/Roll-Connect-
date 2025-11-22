@@ -1,3 +1,4 @@
+
 const Game = require('../models/gameSchema.js');
 const Leaderboard = require('../models/leaderboardSchema.js');
 const {updateLeaderboard} = require('../utils/leaderboardHelper');

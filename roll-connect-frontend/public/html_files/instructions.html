@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" /> -->
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css_files/instructions.css">
+    <title>Ludo Game</title>
+</head>
+<!-- <body>
+
+    <h1>LUDO GAME<br>
+        <div id="game-box">
+            <img src="background.jpg">
+            <div id="theme_selection_title">SELECT THE THEME</div>
+            <div id="theme_options">        
+                <div class="theme_option" id="theme_option_1">SPACE</div>
+                <div class="theme_option" id="theme_option_2">FOREST</div>
+
+            </div>
+            <div id="settings_icon">
+                <img src="settings-icon.png" alt="Settings"><h1>SETTINGS</h1>
+            </div>
+            <div id="leader_board_icon">
+                <img src="leaderboard-icon-5.png" alt="Leaderboard"><h1>LEADERBOARD</h1>
+            </div>
+        </h1>
+        </div>
+
+</body> -->
+
+    <h1>LUDO GAME<br>
+    <div id="game-box">
+        <div class="top-bar">
+            <h1 id="roll">ROLL</h1>
+            <h1 id="connect">CONNECT</h1>
+        </div>
+        <img src="../images/background.jpg">
+        <div id="settings_icon">
+            <img src="../images/settings-icon.png" alt="Settings"><h1>SETTINGS</h1>
+        </div>
+        <div id="leader_board_icon">
+            <img src="../images/leaderboard-icon-5.png" alt="Leaderboard"><h1>LEADERBOARD</h1>
+        </div>
+
+        <div id="blurred_overlay">
+            <div id="instructions_box">
+                <div id="back_icon"><img src="../images/back_button.png" alt="back_button" onclick="goBackToMain()"></div>
+                <h1>INSTRUCTIONS</h1>
+                <ol id="instructions_list">
+                    <li>Select your theme: SPACE or FOREST before starting.</li>
+                    <li>Choose number of players: 2 or 4 in offline mode, or create/join a room for online mode.</li>
+                    <li>Move your pawns using arrow keys or W, A, S, D keys.</li>
+                    <li>Click the dice to roll and move the corresponding number of spaces.</li>
+                    <li>Objective: Move all your pawns from start to home before your opponents do.</li>
+                </ol>
+            </div>
+        </div>
+                
+    </div>
+    </h1>
+    </div>
+    <script>
+    function goBackToMain() {
+    window.location.href = "ludo_main.html"; // redirects to your main page
+}
+</script>
+
+
+</body>
+</html>

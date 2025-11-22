@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" /> -->
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css_files/loading.css">
+    <title>Ludo Game</title>
+</head>
+
+    <h1>LUDO GAME<br>
+    <div id="game-box">
+        <div class="top-bar">
+            <h1 id="roll">ROLL</h1>
+            <h1 id="connect">CONNECT</h1>
+        </div>
+        <img src="../images/background.jpg">
+        <div id="settings_icon">
+            <img src="../images/Settings-icon.png" alt="Settings"><h1>SETTINGS</h1>
+        </div>
+        <div id="leader_board_icon">
+            <img src="../images/leaderboard-icon-5.png" alt="Leaderboard"><h1>LEADERBOARD</h1>
+        </div>
+        <div id="blurred_overlay">
+        <section>
+          <div class="loader">
+            <div class="upper ball"></div>
+            <div class="right ball"></div>
+            <div class="lower ball"></div>
+            <div class="left ball"></div>
+        </div>
+        </section>
+ 
+        </div>
+    </div>
+    </h1>
+    </div>
+
+
+
+<script>
+const overlay = document.getElementById('blurred_overlay');
+const themeOption1 = document.getElementById('theme_option_1');
+const themeOption2 = document.getElementById('theme_option_2');
+
+// Click any theme to remove overlay
+themeOption1.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    console.log('SPACE theme selected');
+});
+
+themeOption2.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    console.log('FOREST theme selected');
+});
+</script>
+</body>
+</html>

@@ -46,15 +46,23 @@ const guestLogin = async (req, res) => {
 // google login success callback
 
 const googleLoginSuccess = (req, res) => {
-     if (req.user) {
-        res.redirect(`http://localhost:5500/game?user=${encodeURIComponent(JSON.stringify({
-            userId: req.user.userId,
-            username: req.user.username,
-            email: req.user.email,
-            authType: req.user.authType,
-            totalWins: req.user.totalWins,
-            coins: req.user.coins
-        }))}`);    
+    if (req.user) {
+    //     res.redirect(`http://localhost:5500/game?user=${encodeURIComponent(JSON.stringify({
+    //         userId: req.user.userId,
+    //         username: req.user.username,
+    //         email: req.user.email,
+    //         authType: req.user.authType,
+    //         totalWins: req.user.totalWins,
+    //         coins: req.user.coins
+    //     }))}`);    
+        res.redirect(`http://localhost:5000/?user=${encodeURIComponent(JSON.stringify({
+        userId: req.user.userId,
+        username: req.user.username,
+        email: req.user.email,
+        authType: req.user.authType,
+        totalWins: req.user.totalWins,
+        coins: req.user.coins
+    }))}`);
     } else {
         res.redirect('http://localhost:5500/login?error=authentication_failed');
     }
@@ -72,3 +80,6 @@ const logout = (req, res) => {
 }
 
 module.exports = {guestLogin, googleLoginSuccess, logout};
+
+
+

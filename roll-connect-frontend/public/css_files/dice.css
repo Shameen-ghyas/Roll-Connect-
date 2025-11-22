@@ -1,0 +1,146 @@
+*{
+    margin:0;
+    padding: 0;
+    border:0;
+    outline:0;
+    box-sizing: border-box;
+
+}
+body{
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(22, 22, 22);
+
+}
+.container{
+    display:grid;
+    place-items: center;
+    width:250px;
+    background: white;
+    height:300px;
+    padding: 60px 0 40px;
+    border-radius: 30px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+
+}
+.dice{
+    position: relative;
+    width: 100px;
+    height: 100px;
+    transform-style: preserve-3d;
+    transition: 1s ease;
+}
+@keyframes rolling{
+    50% {
+        transform: rotateX(455deg) rotateY(455deg);
+    }
+}
+.face{
+    position: absolute;
+    width:100%;
+    height: 100%;
+    border-radius: 20px;
+    border:5px solid #f5ebeb;
+    transform-style: preserve-3d;
+    background: linear-gradient(
+        145deg,#dddbd8,#fff
+    );
+    
+}
+.face::before{
+    position: absolute;
+    content: '';
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    background: #fdfffd;
+    transform: translateZ(-1px);
+}
+.face::after{
+    position: absolute;
+    content: '';
+    top:50%;
+    left:50%;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #00f7ff;   /* dot color */
+
+}
+.front{
+    transform: translateZ(50px);
+}
+.back{
+    transform:rotateX(180deg) translateZ(50px);
+}
+.top{
+    transform:rotateX(90deg) translateZ(50px);
+}
+.bottom{
+    transform:rotateX(-90deg) translateZ(50px);
+}
+
+.right{
+    transform:rotateY(90deg) translateZ(50px);
+}
+.left{
+    transform:rotateY(-90deg) translateZ(50px);
+}
+
+
+.front::after{
+    width: 30px;
+    height: 30px;
+    background: #f63330;
+    margin: -15px 0 0 -15px ;
+
+
+}
+.back::after{
+  /* ensure no stray center dot from .face::after */
+  background: transparent;
+  color:#00f7ff;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px; /* center the shadow origin */
+  box-shadow:
+    -26px -26px,    26px -26px,   /* top row (3) */
+    -26px  0px,    26px  0px,                 /* middle row (2) */
+    -26px  26px,     26px 26px;      /* bottom row (3) */
+  /* Note: we placed 8 shadows but we'll hide the center one below */
+}
+
+.top::after{
+    margin: -30px 0 0 -30px;
+    box-shadow: 40px 40px;
+    color:#00f7ff;
+}
+.bottom::after{
+    color:#00f7ff;
+    margin:-36px 0 0 -36px;
+    box-shadow: 26px 26px,
+               52px 52px,
+               52px 0,
+               0 52px;
+
+}
+.dice{
+    transform: rotateX(180deg) rotateY(0deg);
+}
+.right::after{
+    color:#00f7ff;
+    margin:-30px 0 0 -30px;
+    box-shadow: 40px 0,
+               0px 40px,
+               0 40px,
+               40px 40px;
+}
+.left::after{
+    color:#00f7ff;
+    margin: -35px 0 0 -35px;
+    box-shadow: 25px 25px,
+                50px 50px;
+    
+}

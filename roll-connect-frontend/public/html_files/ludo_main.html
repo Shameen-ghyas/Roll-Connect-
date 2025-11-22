@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" /> -->
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css_files/style.css">
+    <title>Ludo Game</title>
+</head>
+<body>
+   
+
+    <h1>LUDO GAME<br>
+    <div id="game-box">
+        <div class="top-bar">
+            <h1 id="roll">ROLL</h1>
+            <h1 id="connect">CONNECT</h1>
+        </div>
+        <img src="../images/background.jpg">
+        <div id="settings_icon">
+            <img src="../images/Settings-icon.png" alt="Settings"><h1>SETTINGS</h1>
+        </div>
+        <div id="leader_board_icon">
+            <img src="../images/leaderboard-icon-5.png" alt="Leaderboard" onclick="GoToLeaderboard()"><h1>LEADERBOARD</h1>
+        </div><br>
+        <div id="play_button">PLAY<span id="triangle_vertical" onclick="GoToThemeSelection()"> ▶</span></div> 
+        <div id="ins_button" onclick="GoToInstructions()">INSTRUCTIONS</div>
+<!-- LOGIN POPUP -->
+    <div id="loginPopup" class="neon-popup">
+        <div class="buttons">
+            <button id="guestBtn">PLAY AS GUEST</button>
+            <button id="googleBtn">Login with Google</button>
+        </div>
+     </div>
+        <!-- THIS WAS WRONG -->
+        <!-- gameOptionsPopup is fine here because it's hidden -->
+        <div id="gameOptionsPopup" class="neon-popup" style="display:none;">
+            <h2 id="greetingText">Play Options</h2>
+            <div class="buttons">
+                <button id="createGameBtn">CREATE GAME</button>
+                <button id="joinGameBtn">JOIN GAME</button>
+            </div>
+        </div>
+    
+
+    <!--Guest popup must be OUTSIDE the loginPopup -->
+    <div id="guestPopup" class="popup-overlay">
+        <div class="popup-box">
+            <h2 class="popup-title">Guest Login</h2>
+            <input type="text" id="guestNameInput" placeholder="Enter your name">
+            <button id="guestSubmitBtn">Continue</button>
+        </div>
+    </div>
+    <div id="modePopup" class="popup-overlay">
+        <div class="popup-box">
+            <h2>Select Mode</h2>
+            <button id="modeOnline" class="neon-button">Online</button>
+            <button id="modeOffline" class="neon-button">Offline</button>
+        </div>
+    </div>
+    <div id="joinPopup" class="popup-overlay">
+        <div class="popup-box">
+            <h2>Join Game</h2>
+            <input id="joinGameId" class="neon-input" placeholder="Enter Game ID">
+
+            <div class="radio-group">
+                <label><input type="radio" name="joinMode" value="online"> Online</label>
+                <label><input type="radio" name="joinMode" value="offline"> Offline</label>
+            </div>
+
+            <button id="joinSubmitBtn" class="neon-button">Join</button>
+        </div>
+    </div>
+
+
+
+
+
+    </h1>
+    </div>
+    <!-- <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script> -->
+    <!-- <script src="../js/clientSocket.js"></script> -->
+
+    <script>
+//     function GoToThemeSelection() {
+//     window.location.href = "ludo_theme_selection.html"; // redirects to your theme selection page
+// }
+    function GoToLeaderboard() {
+    window.location.href = "html_files/leaderboard.html"; // redirects to your leaderboard page
+}
+    function GoToInstructions() {
+    window.location.href = "html_files/instructions.html"; // redirects to your instructions page
+}
+</script>
+ <script src="../js/main.js"></script>
+
+
+
+</body>
+</html>

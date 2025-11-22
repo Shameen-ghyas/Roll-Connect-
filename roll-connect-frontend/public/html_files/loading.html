@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css_files/loading.css">
+    <title>Ludo Game</title>
+</head>
+
+<body>
+
+    <h1>LUDO GAME
+
+    <div id="game-box">
+
+        <img src="../images/background.jpg">
+
+        <div id="settings_icon">
+            <img src="../images/Settings-icon.png" alt="Settings">
+            <h1>SETTINGS</h1>
+        </div>
+
+        <div id="leader_board_icon">
+            <img src="../images/leaderboard-icon-5.png" alt="Leaderboard">
+            <h1>LEADERBOARD</h1>
+        </div>
+
+        <!-- BLUR OVERLAY -->
+        <div id="blurred_overlay">
+
+            <!-- LOADER -->
+            <section>
+                <div class="loader">
+                    <div class="ball upper"></div>
+                    <div class="ball right"></div>
+                    <div class="ball lower"></div>
+                    <div class="ball left"></div>
+                </div>
+            </section>
+
+            <!-- GAME INFO BOX -->
+            <div id="gameInfo" style="text-align:center; color:white; margin-top:20px;">
+                <p id="msg" style="font-size:22px; color:#05a9f5; margin-bottom:10px;"></p>
+                <p id="gameId"></p>
+                <button id="copyGameId">Copy Game ID</button>
+                <p id="gameMode"></p>
+                <p id="gameStatus"></p>
+
+                <h3 style="color:#05a9f5; margin-top:10px;">Players:</h3>
+                <ul id="playerList"></ul>
+                <button id="startGameBtn">Start Game</button>
+            </div>
+
+        </div>
+    </h1>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="../js/loading.js"></script>
+
+</body>
+</html>

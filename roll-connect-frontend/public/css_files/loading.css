@@ -1,0 +1,183 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Jura', sans-serif;
+}
+
+body {
+    height: 100vh;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+h1 {
+    color: #05a9f5;
+    font-weight: 600;
+    text-align: center;
+    /* margin-bottom: 20px; */
+    font-size: 65px;
+    margin-top: 0px;
+}
+
+/* ---------------- GAME BOX ---------------- */
+#game-box {
+    position: relative;
+    width: 1100px;
+    height: 750px;
+    background-color: #0e0d0dec;
+    border: 3px solid white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#game-box img {
+    width: 70%;
+    height: 100%;
+    border-radius: 20px;
+}
+
+/* ---------------- BLUR OVERLAY ---------------- */
+#blurred_overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10;
+
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    padding-top: 40px;
+}
+
+/* ---------------- LOADER ---------------- */
+section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+section .loader {
+    height: 25px;
+    width: 25px;
+    position: relative;
+}
+
+.loader .ball {
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    position: absolute;
+}
+
+/* Blue */
+.loader .upper {
+    left: 0;
+    top: -28px;
+    background: #2da2ff;
+    animation: upper 1s infinite;
+}
+
+@keyframes upper {
+    50%, 100% { top: 28px; }
+}
+
+/* Pink */
+.loader .right {
+    bottom: 0;
+    right: -28px;
+    background: #ff0055;
+    animation: right 1s infinite;
+}
+
+@keyframes right {
+    50%,100% { right: 28px; }
+}
+
+/* Yellow */
+.loader .lower {
+    bottom: -28px;
+    right: 0;
+    background: #fffc3f;
+    animation: lower 1s infinite;
+}
+
+@keyframes lower {
+    50%,100% { bottom: 28px; }
+}
+
+/* Green */
+.loader .left {
+    left: -28px;
+    bottom: 0;
+    background: #a4ff2d;
+    animation: left 1s infinite;
+}
+
+@keyframes left {
+    50%,100% { left: 28px; }
+}
+
+/* ---------------- GAME INFO ---------------- */
+#gameInfo {
+    width: 70%;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 25px;
+    border-radius: 10px;
+    border: 2px solid #05a9f5;
+    text-align: center;
+    color: white;
+    z-index: 15;
+}
+
+#msg {
+    color: #05a9f5;
+    font-size: 23px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+#gameInfo p {
+    font-size: 20px;
+    margin: 4px 0;
+    z-index: 20;
+}
+
+#playerList {
+    list-style: none;
+    margin-top: 10px;
+    padding: 0;
+    z-index: 20;
+}
+
+#playerList li {
+    font-size: 20px;
+    margin: 6px 0;
+    font-weight: 600;
+    z-index: 20;
+}
+#startGameBtn {
+    margin-top: 15px;
+    padding: 10px 25px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background: #05a9f5;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#startGameBtn:hover {
+    background: #0288d1;
+}
+
