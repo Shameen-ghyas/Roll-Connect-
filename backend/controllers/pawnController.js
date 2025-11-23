@@ -138,7 +138,27 @@ const movePawn = async (req, res) => {
         }
 
         await game.save();
+        const io = req.app.get('socketio');
+if (io) {
+    // Emit pawn moved event
+    io.to(gameId).emit('pawn-moved', {
+        playerName: playerName,
+        pawnId: pawnId,
+        newPosition: pawn.position,
+        isHome: pawn.isHome,
+        color: player.color,
+        message: `${playerName} moved pawn ${pawnId}`
+    });
 
+    // Emit turn changed event if turn advanced
+    if (shouldAdvanceTurn) {
+        io.to(gameId).emit('turn-changed', {
+            currentTurn: game.currentTurn,
+            currentPlayer: game.players[game.currentTurn].playerName,
+            message: `${game.players[game.currentTurn].playerName}'s turn`
+        });
+    }
+}
         res.status(200).json({
             success: true,
             message: 'Pawn moved successfully',

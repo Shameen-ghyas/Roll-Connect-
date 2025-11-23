@@ -289,7 +289,7 @@ function handleDiceClick(event) {
   if (!dice) return;
 
   const diceValue = Math.floor(Math.random() * 6) + 1;
-  currentDiceValue = diceValue;
+  // currentDiceValue = diceValue;
   
   console.log(`✅ Rolled: ${diceValue}`);
   
@@ -297,8 +297,10 @@ function handleDiceClick(event) {
 
   socket.emit('roll-dice', {
     gameId: gameId,
-    playerName: playerName
+    playerName: playerName,
+    diceValue: diceValue 
   });
+
 
   setTimeout(() => {
     // ✅ CRITICAL: Refresh game state before highlighting
@@ -529,6 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
   diceList.forEach((dice) => {
     dice.addEventListener("click", handleDiceClick);
   });
+
 
   // ✅ Join game room and get initial state
   setTimeout(() => {

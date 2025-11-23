@@ -177,56 +177,104 @@ module.exports = (io) => {
         });
 
         socket.on('roll-dice', async (data) => {
-            try{
-                const {gameId, playerName} = data;
+    try{
+        const {gameId, playerName, diceValue} = data;
 
-                const game = await Game.findOne({gameId: gameId});
+        const game = await Game.findOne({gameId: gameId});
 
-                if (!game) {
-                    socket.emit('error', { message: 'Game not found' });
-                    return;
-                }
-                // check if game is active
-                if (game.gameStatus !== 'active') {
-                    socket.emit('error', { message: 'Game is not active. Cannot roll dice.' });
-                    return;
-                }
-                // check if it's the player's turn
-                const currentPlayer = game.players[game.currentTurn];
-                if (!currentPlayer) {
-                    socket.emit('error', { message: 'Invalid turn state' });
-                    return;
-                }
-                // ✅ Handle whitespace in player names
-                if (currentPlayer.playerName.trim() !== playerName.trim()) {
-                    socket.emit('error', { message: `Not your turn! It's ${currentPlayer.playerName}'s to roll the dice.` });
-                    return;
-                }
-                // roll the dice
-                const diceValue = Math.floor(Math.random() * 6) + 1;
-                // update the game with the new dice value
-                game.diceValue = diceValue;
-                game.waitingForPawnMove = true;
-                game.lastRoll = {  
-                    playerName: playerName,
-                    timestamp: new Date()
-                };  
-                await game.save();
-
-                //notify all players in the game room about the dice roll
-                io.to(gameId).emit('dice-rolled', {
-                    message: `${playerName} rolled a ${diceValue}`,
-                    diceValue: diceValue,
-                    playerName: playerName,
-                    currentTurn: game.currentTurn
-                });
-                console.log(`Player ${playerName} rolled a ${diceValue} in game ${gameId}`);    
-
-            }catch (error) {
-                console.error("Error in roll-dice:", error);
-                socket.emit('error', {message: "Failed to roll dice"});
-            }
+        if (!game) {
+            socket.emit('error', { message: 'Game not found' });
+            return;
+        }
+        
+        if (game.gameStatus !== 'active') {
+            socket.emit('error', { message: 'Game is not active. Cannot roll dice.' });
+            return;
+        }
+        
+        const currentPlayer = game.players[game.currentTurn];
+        if (!currentPlayer) {
+            socket.emit('error', { message: 'Invalid turn state' });
+            return;
+        }
+        
+        if (currentPlayer.playerName.trim() !== playerName.trim()) {
+            socket.emit('error', { message: `Not your turn! It's ${currentPlayer.playerName}'s turn.` });
+            return;
+        }
+        
+        // ✅ Use client dice value
+        const finalDiceValue = diceValue || Math.floor(Math.random() * 6) + 1;
+        
+        game.diceValue = finalDiceValue;
+        game.lastRoll = {  
+            playerName: playerName,
+            timestamp: new Date()
+        };
+        
+        // ✅ Check if player has valid moves
+        let hasValidMoves = false;
+        
+        if (finalDiceValue === 6) {
+            hasValidMoves = true; // Can always move with 6 (release pawn)
+        } else {
+            // Check if any pawn on board can move
+            const pawnsOnBoard = currentPlayer.pawns.filter(p => p.position >= 0 && p.position < 57 && !p.isHome);
+            hasValidMoves = pawnsOnBoard.some(pawn => {
+                const newPos = pawn.position + finalDiceValue;
+                return newPos <= 57;
+            });
+        }
+        
+        // Notify about dice roll
+        io.to(gameId).emit('dice-rolled', {
+            message: `${playerName} rolled a ${finalDiceValue}`,
+            diceValue: finalDiceValue,
+            playerName: playerName,
+            currentTurn: game.currentTurn
         });
+        console.log(`Player ${playerName} rolled a ${finalDiceValue}`);
+        
+        // ✅ If NO valid moves, auto-advance turn
+        if (!hasValidMoves) {
+    console.log(`❌ ${playerName} has no valid moves`);
+    
+    // ✅ Save dice value first so player can see it
+    await game.save();
+    
+    // Wait 2 seconds before advancing turn
+    setTimeout(async () => {
+        const updatedGame = await Game.findOne({gameId: gameId});
+        if (!updatedGame) return;
+        
+        const nextTurnIndex = (updatedGame.currentTurn + 1) % updatedGame.players.length;
+        updatedGame.currentTurn = nextTurnIndex;
+        updatedGame.consecutiveSixes = 0;
+        updatedGame.diceValue = null;
+        updatedGame.waitingForPawnMove = false;
+        
+        await updatedGame.save();
+        
+        io.to(gameId).emit('turn-changed', {
+            currentTurn: updatedGame.currentTurn,
+            currentPlayer: updatedGame.players[nextTurnIndex].playerName,
+            message: `No moves - ${updatedGame.players[nextTurnIndex].playerName}'s turn`
+        });
+        
+        console.log(`✅ Turn auto-advanced to ${updatedGame.players[nextTurnIndex].playerName}`);
+    }, 2000); // 2 second delay
+}else {
+            // Has valid moves - wait for pawn selection
+            game.waitingForPawnMove = true;
+            await game.save();
+            console.log(`⏳ ${playerName} has valid moves - waiting for pawn selection`);
+        }
+
+    }catch (error) {
+        console.error("Error in roll-dice:", error);
+        socket.emit('error', {message: "Failed to roll dice"});
+    }
+});
         
         socket.on('next-turn', async (data) => {
             try {
@@ -374,6 +422,11 @@ module.exports = (io) => {
             game.diceValue = null;
             game.waitingForPawnMove = false;
 
+console.log('🔍 DEBUG: About to check turn advance...');
+console.log('🔍 extraTurn:', game.extraTurn);
+console.log('🔍 currentTurn:', game.currentTurn);
+console.log('🔍 players:', game.players.map(p => p.playerName));
+
             // check if the player finished all pawns
             const allPawnsHome = player.pawns.every( p => p.isHome === true);
 
@@ -463,7 +516,7 @@ module.exports = (io) => {
                     skipped++;
                 }
                 
-                if (skipped < game.players.length) {
+                if (skipped < game.players.length-1) {
                     game.currentTurn = finalTurnIndex;
                     game.consecutiveSixes = 0;
                     
@@ -477,6 +530,7 @@ module.exports = (io) => {
                     });
                     console.log(`✅ Turn auto-advanced to ${game.players[finalTurnIndex].playerName} (index: ${finalTurnIndex})`);
                 } else {
+                     console.log('⚠️ No turn advance - all players finished?');
                     await game.save();
                 }
             }

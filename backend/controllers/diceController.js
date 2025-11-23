@@ -2,7 +2,7 @@ const Game = require('../models/gameSchema');
 
 const rollDice = async (req, res) => {
     try {
-        const { gameId, playerName } = req.body;
+        const { gameId, playerName, diceValue} = req.body;
 
         if (!gameId || !playerName) {
             return res.status(400).json(
@@ -33,9 +33,10 @@ const rollDice = async (req, res) => {
             });
         } 
          // roll the dice
-        const diceValue = Math.floor(Math.random() * 6) + 1;
+        // ✅ Use client dice value if provided, otherwise roll on server
+const finalDiceValue = diceValue || Math.floor(Math.random() * 6) + 1;
 
-        if (diceValue === 6) {
+        if (finalDiceValue === 6) {
             game.consecutiveSixes += 1;
             if (game.consecutiveSixes >=3 ) {
 
@@ -63,13 +64,13 @@ const rollDice = async (req, res) => {
             game.consecutiveSixes = 0;
         }
 
-        game.diceValue = diceValue;
+        game.diceValue = finalDiceValue;
         game.lastRoll = {
             playerName: playerName,
             timestamp: new Date()
         };
 
-        if (diceValue === 6) {
+        if (finalDiceValue === 6) {
             game.extraTurn = true;
             game.extraTurnReason = 'rolled a six';
         } else {
@@ -91,9 +92,9 @@ const rollDice = async (req, res) => {
             await game.save();
             return res.status(200).json({
                 success: true,
-                message: `${playerName} rolled ${diceValue} but has no valid moves. Turn skipped.`,
+                message: `${playerName} rolled ${finalDiceValue} but has no valid moves. Turn skipped.`,
                 data: {
-                    diceValue: diceValue,
+                    diceValue: finalDiceValue,
                     noMoves: true,
                     currentTurn: game.currentTurn,
                     currentPlayer: game.players[game.currentTurn].playerName,
@@ -108,9 +109,9 @@ const rollDice = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: `${playerName} rolled a ${diceValue}`,
+            message: `${playerName} rolled a ${finalDiceValue}`,
             data: {
-                diceValue: diceValue,
+                diceValue: finalDiceValue,
                 playerName: playerName,
                 currentTurn: game.currentTurn,
                 gameId: game.gameId,

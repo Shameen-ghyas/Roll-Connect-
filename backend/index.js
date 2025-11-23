@@ -30,7 +30,7 @@ const io = new Server(server, {
   },
   // path: "/socket.io"  // default
 });
-
+app.set('socketio',io);
 // ---------------- MIDDLEWARE ----------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
