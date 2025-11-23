@@ -15,9 +15,9 @@
 
 <body>
   <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
   <script>
       window.socket = io();  
+      console.log("Socket initialized in HTML");
   </script>
 
 
@@ -325,14 +325,6 @@ diceList.forEach((d, i) => {
 
 updateTurn(); // initialize turn for red
 </script> -->
-<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-
-<!-- Initialize Socket -->
-<script>
-  window.socket = io();
-  console.log("Socket.io initialized");
-</script>
-
 <script src="../js/board.js"></script>
  
 

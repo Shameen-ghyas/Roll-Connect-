@@ -481,7 +481,7 @@ setInterval(() => {
   if (gameId && socket.connected) {
     socket.emit('get-game-state', { gameId });
   }
-}, 1000);
+}, 2000);
 
 // ==========================
 //   INITIALIZATION

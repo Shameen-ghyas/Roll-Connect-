@@ -167,7 +167,8 @@ module.exports = (io) => {
                     players: game.players,
                     mode: game.mode,
                     gameStatus: game.gameStatus,
-                    currentTurn: game.currentTurn
+                    currentTurn: game.currentTurn,
+                    diceValue: game.diceValue
                 });
             }catch (error) {
                 console.error("Error in get-game-state:", error);
@@ -192,7 +193,12 @@ module.exports = (io) => {
                 }
                 // check if it's the player's turn
                 const currentPlayer = game.players[game.currentTurn];
-                if (currentPlayer.playerName !== playerName) {
+                if (!currentPlayer) {
+                    socket.emit('error', { message: 'Invalid turn state' });
+                    return;
+                }
+                // ✅ Handle whitespace in player names
+                if (currentPlayer.playerName.trim() !== playerName.trim()) {
                     socket.emit('error', { message: `Not your turn! It's ${currentPlayer.playerName}'s to roll the dice.` });
                     return;
                 }
@@ -200,6 +206,7 @@ module.exports = (io) => {
                 const diceValue = Math.floor(Math.random() * 6) + 1;
                 // update the game with the new dice value
                 game.diceValue = diceValue;
+                game.waitingForPawnMove = true;
                 game.lastRoll = {  
                     playerName: playerName,
                     timestamp: new Date()
@@ -276,7 +283,8 @@ module.exports = (io) => {
                 return;
             }
 
-            const playerIndex = game.players.findIndex(p => p.playerName === playerName);
+            // ✅ Handle whitespace in player names
+            const playerIndex = game.players.findIndex(p => p.playerName.trim() === playerName.trim());
             if (playerIndex === -1) {
                 socket.emit('error', { message: 'Player not found' });
                 return;
@@ -372,6 +380,7 @@ module.exports = (io) => {
             if (allPawnsHome && player.rank === null) {
                 // assign ranks
                 const finishedPlayers = game.players.filter( p => p.rank !== null);
+                player.rank = finishedPlayers.length + 1;
                 player.finishedAt = new Date();
 
                 // notify other players 
@@ -413,10 +422,8 @@ module.exports = (io) => {
                     console.log("Game completed! Rankings:", rankings);
                 }
             }
-            await game.save();
-
             
-            // Broadcast to ALL players in the game room
+            // ✅ CRITICAL: Broadcast pawn moved FIRST
             io.to(gameId).emit('pawn-moved', {
                 playerName: playerName,
                 pawnId: pawnId,
@@ -425,8 +432,54 @@ module.exports = (io) => {
                 color: player.color,
                 message: `${playerName} moved pawn ${pawnId} to position ${pawn.position}`
             });
-
-            console.log(`Pawn moved: ${playerName} - Pawn ${pawnId} to ${pawn.position}`);
+            console.log(`✅ Pawn moved: ${playerName} - Pawn ${pawnId} to ${pawn.position}`);
+            
+            // ✅ CRITICAL: Auto-advance turn if no extra turn
+            let shouldAdvanceTurn = true;
+            if (game.extraTurn) {
+                shouldAdvanceTurn = false;
+                game.extraTurn = false;
+                game.extraTurnReason = null;
+                
+                await game.save();
+                
+                // Notify about extra turn
+                io.to(gameId).emit('extra-turn-granted', {
+                    currentPlayer: game.players[game.currentTurn].playerName,
+                    message: 'Extra turn granted!'
+                });
+                console.log(`✅ Extra turn granted to ${game.players[game.currentTurn].playerName}`);
+            }
+            
+            // Auto-advance turn if no extra turn
+            if (shouldAdvanceTurn) {
+                const nextTurnIndex = (game.currentTurn + 1) % game.players.length;
+                
+                // Skip players who already finished
+                let finalTurnIndex = nextTurnIndex;
+                let skipped = 0;
+                while (game.players[finalTurnIndex] && game.players[finalTurnIndex].rank !== null && skipped < game.players.length) {
+                    finalTurnIndex = (finalTurnIndex + 1) % game.players.length;
+                    skipped++;
+                }
+                
+                if (skipped < game.players.length) {
+                    game.currentTurn = finalTurnIndex;
+                    game.consecutiveSixes = 0;
+                    
+                    await game.save();
+                    
+                    // ✅ CRITICAL: Notify turn changed AFTER saving
+                    io.to(gameId).emit('turn-changed', {
+                        currentTurn: game.currentTurn,
+                        currentPlayer: game.players[finalTurnIndex].playerName,
+                        message: `${game.players[finalTurnIndex].playerName}'s turn`
+                    });
+                    console.log(`✅ Turn auto-advanced to ${game.players[finalTurnIndex].playerName} (index: ${finalTurnIndex})`);
+                } else {
+                    await game.save();
+                }
+            }
 
         } catch (error) {
             console.error('Socket move-pawn error:', error);
